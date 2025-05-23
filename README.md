@@ -13,15 +13,17 @@ A sleek, responsive web application that transforms your mobile device into a re
 
 ## 📥 Download Pre-built Packages
 
-We provide pre-built packages for easy installation:
+We provide pre-built packages for easy installation. Please visit our [Releases page](https://github.com/Volodymyr-Bauzi/PC-Volume-controll-using-mobile/releases) to download the latest version for your platform.
 
 ### Windows
-- [Download for Windows 10/11 (64-bit)](https://github.com/Volodymyr-Bauzi/PC-Volume-controll-using-mobile/releases/download/${VERSION}/volume-control-windows-x64.exe)
-- [Download for Windows 7/8.1 (32-bit)](https://github.com/Volodymyr-Bauzi/PC-Volume-controll-using-mobile/releases/download/${VERSION}/volume-control-windows-ia32.exe)
+- [Download for Windows 10/11 (64-bit)](https://github.com/Volodymyr-Bauzi/PC-Volume-controll-using-mobile/releases/latest)
+- [Download for Windows 7/8.1 (32-bit)](https://github.com/Volodymyr-Bauzi/PC-Volume-controll-using-mobile/releases/latest)
 
 ### Linux
-- [Download for Linux (64-bit)](https://github.com/Volodymyr-Bauzi/PC-Volume-controll-using-mobile/releases/download/${VERSION}/volume-control-linux-x64)
-- [Download for Linux (ARM64)](https://github.com/Volodymyr-Bauzi/PC-Volume-controll-using-mobile/releases/download/${VERSION}/volume-control-linux-arm64)
+- [Download for Linux (64-bit)](https://github.com/Volodymyr-Bauzi/PC-Volume-controll-using-mobile/releases/latest)
+- [Download for Linux (ARM64)](https://github.com/Volodymyr-Bauzi/PC-Volume-controll-using-mobile/releases/latest)
+
+> **Note**: After downloading, make sure to check the release notes for any specific installation instructions.
 
 ## 🛠️ Installation
 
@@ -47,6 +49,30 @@ We provide pre-built packages for easy installation:
 2. **Open your mobile browser** and navigate to the address shown in the application window
    - Example: `http://192.168.1.x:8001`
 3. **Control volume** for any running application directly from your mobile device
+
+## 📦 Release Packaging
+
+To create release packages for distribution, use the included packaging script:
+
+1. **Build the application** for all platforms:
+   ```bash
+   # Build for Windows
+   npm run package:win
+   
+   # Build for Linux
+   npm run package:linux
+   ```
+
+2. **Run the packaging script** to create distribution packages:
+   ```bash
+   node package-release.js
+   ```
+
+3. **Find the packages** in the `release/` directory:
+   - `volume-control-windows-vX.X.X.zip`
+   - `volume-control-linux-vX.X.X.zip`
+
+4. **Upload these files** to your GitHub release.
 
 ## 🔧 Building from Source
 
