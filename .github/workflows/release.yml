@@ -93,8 +93,13 @@ jobs:
           $windowsZip = Get-ChildItem -Path release -Filter "volume-control-windows-*.zip" | Select-Object -First 1
           if ($windowsZip) {
             $newName = "volume-control-windows-v$version.zip"
-            Rename-Item -Path $windowsZip.FullName -NewName $newName -Force
-            Write-Host "Renamed $($windowsZip.Name) to $newName"
+            # Only rename if the filename is different
+            if ($windowsZip.Name -ne $newName) {
+              Rename-Item -Path $windowsZip.FullName -NewName $newName -Force
+              Write-Host "Renamed $($windowsZip.Name) to $newName"
+            } else {
+              Write-Host "File already has the correct name: $($windowsZip.FullName)"
+            }
           } else {
             Write-Error "Windows release zip not found"
             exit 1
@@ -107,8 +112,13 @@ jobs:
           linux_zip=$(find release -name "volume-control-linux-*.zip" | head -1)
           if [ -f "$linux_zip" ]; then
             new_name="volume-control-linux-v$version.zip"
-            mv "$linux_zip" "release/$new_name"
-            echo "Renamed to $new_name"
+            # Only rename if the filename is different
+            if [ "$(basename "$linux_zip")" != "$new_name" ]; then
+              mv "$linux_zip" "release/$new_name"
+              echo "Renamed to $new_name"
+            else
+              echo "File already has the correct name: $linux_zip"
+            fi
           else
             echo "Linux release zip not found"
             exit 1
