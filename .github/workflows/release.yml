@@ -48,25 +48,56 @@ jobs:
         run: ${{ matrix.build_cmd }}
         
       - name: List files in dist directory
+        if: matrix.os == 'ubuntu-latest'
         run: |
           echo "--- Contents of dist/ ---"
           ls -la dist/
           echo "--- Contents of dist/${{ matrix.dist_dir }}/ ---"
           ls -la dist/${{ matrix.dist_dir }} || echo "Directory not found"
+          
+      - name: List files in dist directory (Windows)
+        if: matrix.os == 'windows-latest'
+        run: |
+          echo "--- Contents of dist/ ---"
+          Get-ChildItem -Path dist -Force
+          echo "--- Contents of dist/${{ matrix.dist_dir }}/ ---"
+          if (Test-Path "dist/${{ matrix.dist_dir }}") {
+            Get-ChildItem -Path "dist/${{ matrix.dist_dir }}" -Force
+          } else {
+            echo "Directory not found"
+          }
 
-      - name: Create release directory
-        run: mkdir -p release
+      - name: Create release directory and package release (Linux)
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          mkdir -p release
+          node package-release.js
+          
+      - name: Create release directory and package release (Windows)
+        if: matrix.os == 'windows-latest'
+        run: |
+          New-Item -ItemType Directory -Force -Path release | Out-Null
+          node package-release.js
 
-      - name: Package release
-        run: node package-release.js
-
-      - name: Upload artifacts
+      - name: Upload artifacts (Windows)
+        if: matrix.os == 'windows-latest'
         uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.artifact }}
           path: |
             dist/${{ matrix.dist_dir }}
-            release/volume-control-${{ matrix.artifact }}-v*.zip
+            release/volume-control-windows-v*.zip
+          if-no-files-found: error
+          retention-days: 1
+          
+      - name: Upload artifacts (Linux)
+        if: matrix.os == 'ubuntu-latest'
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.artifact }}
+          path: |
+            dist/${{ matrix.dist_dir }}
+            release/volume-control-linux-v*.zip
           if-no-files-found: error
           retention-days: 1
 
