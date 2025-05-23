@@ -42,10 +42,24 @@ private:
         if (eol > 0) return;
         
         auto* wrapper = static_cast<PulseAudioWrapper*>(userdata);
-        if (i && i->client) {
+        if (i) {
             AudioSink sink;
-            sink.pid = i->client->process_id;
-            sink.name = i->client->name ? i->client->name : "Unknown";
+            // Get client name using the client index
+            const char* client_name = "Unknown";
+            if (i->proplist) {
+                const char* app_name = pa_proplist_gets(i->proplist, PA_PROP_APPLICATION_NAME);
+                if (app_name) {
+                    client_name = app_name;
+                } else {
+                    const char* app_id = pa_proplist_gets(i->proplist, PA_PROP_APPLICATION_ID);
+                    if (app_id) {
+                        client_name = app_id;
+                    }
+                }
+            }
+            
+            sink.pid = i->owner_module;  // This might be -1 if not available
+            sink.name = client_name;
             sink.volume = pa_cvolume_avg(&i->volume) / (double)PA_VOLUME_NORM;
             sink.muted = i->mute != 0;
             wrapper->sinks.push_back(sink);
