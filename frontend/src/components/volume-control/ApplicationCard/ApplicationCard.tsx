@@ -52,10 +52,11 @@ const ApplicationCardComponent: React.FC<ApplicationCardProps> = ({
       min={0}
       max={100}
       step={1}
-      orientation="vertical"
+      orientation="horizontal"
       onChange={handleVolumeChange}
       onChangeEnd={handleVolumeChangeEnd}
       aria-label={`Volume control for ${appName}`}
+      style={{ width: '100%' }}
     />
   ), [displayVolume, handleVolumeChange, handleVolumeChangeEnd, appName]);
 
@@ -69,27 +70,31 @@ const ApplicationCardComponent: React.FC<ApplicationCardProps> = ({
       role="region"
       aria-label={`${appName} volume control`}
     >
-      <Text
-        fw={500}
-        ta="center"
-        className={styles.appName}
-        title={appName}
-        aria-label={`Application: ${appName}`}
-      >
-        {appName}
-      </Text>
+      <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+        <Text
+          fw={500}
+          ta="center"
+          className={styles.appName}
+          title={appName}
+          aria-label={`Application: ${appName}`}
+        >
+          {appName}
+        </Text>
 
-      <div className={styles.sliderContainer}>
-        {volumeSlider}
+        <div className={styles.sliderContainer}>
+          {volumeSlider}
+        </div>
+
+        <Text 
+          size="sm" 
+          className={`${styles.volumeText} ${isAppMuted ? styles.muted : styles.dimmed}`}
+          aria-live="polite"
+          ta="center"
+          mt="xs"
+        >
+          {volumeText}
+        </Text>
       </div>
-
-      <Text 
-        size="sm" 
-        className={`${styles.volumeText} ${isAppMuted ? styles.muted : styles.dimmed}`}
-        aria-live="polite"
-      >
-        {volumeText}
-      </Text>
     </Card>
   );
 };

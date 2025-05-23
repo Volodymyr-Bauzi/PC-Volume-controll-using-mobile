@@ -43,11 +43,76 @@ We provide pre-built packages for easy installation. Please visit our [Releases 
    ./volume-control-linux-x64
    ```
 
+## 🛠️ Development Setup
+
+### Prerequisites
+- Node.js 16+ and npm 7+
+- Git
+- (Optional) Yarn or pnpm
+
+### Getting Started
+
+1. **Clone the repository**
+   ```bash
+   git clone https://github.com/Volodymyr-Bauzi/PC-Volume-controll-using-mobile.git
+   cd PC-Volume-controll-using-mobile
+   ```
+
+2. **Install dependencies**
+   ```bash
+   npm install
+   ```
+
+3. **Set up environment variables**
+   - Copy `.env.example` to `.env.local`
+   - Modify the values as needed for your local setup
+
+### Available Scripts
+
+- `npm start` - Start both frontend and backend in development mode
+- `npm run start:prod` - Start in production mode
+- `npm run build` - Build both frontend and backend for production
+- `npm run package` - Package the application for distribution
+- `npm test` - Run tests
+- `npm run lint` - Run linter
+
+### Environment Variables
+
+Key environment variables:
+
+- `NODE_ENV` - Environment (development, production, test)
+- `REACT_APP_API_URL` - Backend API URL
+- `REACT_APP_WS_URL` - WebSocket URL
+- `REACT_APP_DEBUG` - Enable debug logging
+
 ## 🎮 Usage
+
+### Development Mode
+
+1. Start the development server:
+   ```bash
+   npm start
+   ```
+2. The application will be available at `http://localhost:3000`
+3. The backend API will be available at `http://localhost:3001`
+
+### Production Mode
+
+1. Build the application:
+   ```bash
+   npm run build
+   ```
+2. Start the production server:
+   ```bash
+   npm run start:prod
+   ```
+3. The application will be available at `http://localhost:3000`
+
+### Remote Access
 
 1. **Start the application** on your PC
 2. **Open your mobile browser** and navigate to the address shown in the application window
-   - Example: `http://192.168.1.x:8001`
+   - Example: `http://192.168.1.x:3000`
 3. **Control volume** for any running application directly from your mobile device
 
 ## 📦 Release Packaging

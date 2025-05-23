@@ -98,7 +98,7 @@ export function VolumeControlApp() {
               onVolumeChangeEnd={setSystemVolume}
             />
           </div>
-          <div style={{ display: 'grid', gap: '1rem', color: 'inherit' }}>
+          <div style= {{ display: 'flex', flexWrap: 'wrap', gap: '1rem' }}>
             {applications.map((app) => (
               <ApplicationCard
                 key={app.name}
