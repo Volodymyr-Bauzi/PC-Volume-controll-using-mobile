@@ -115,9 +115,15 @@ jobs:
     name: Update README
     needs: create-release
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
+        with:
+          fetch-depth: 0  # Fetch all history for all branches and tags
+          ref: main        # Checkout the main branch specifically
 
       - name: Update download links in README
         env:
@@ -129,6 +135,20 @@ jobs:
         run: |
           git config --global user.name 'GitHub Actions'
           git config --global user.email 'actions@github.com'
+          git config --global --add safe.directory /github/workspace
+          
+          # Switch to main branch explicitly
+          git checkout main
+          
+          # Stage and commit changes
           git add README.md
-          git diff --quiet && git diff --staged --quiet || git commit -m "Update download links for ${GITHUB_REF_NAME}"
-          git push
+          
+          # Only commit if there are changes
+          if ! git diff --staged --quiet; then
+            git commit -m "docs: update download links for ${GITHUB_REF_NAME}"
+            
+            # Push changes back to the repository
+            git push https://${{ github.actor }}:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git HEAD:main
+          else
+            echo "No changes to commit"
+          fi
