@@ -158,18 +158,34 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Configure Git
+        run: |
+          git config --global user.name 'GitHub Actions'
+          git config --global user.email 'actions@github.com'
 
       - name: Update download links in README
         env:
           VERSION: ${{ github.ref_name }}
         run: |
-          sed -i 's|https://github.com/yourusername/volume-control/releases/latest/download/|https://github.com/Volodymyr-Bauzi/PC-Volume-controll-using-mobile/releases/download/${VERSION}/|g' README.md
+          # Switch to the main branch
+          git checkout main
+          
+          # Update the download links
+          sed -i 's|https://github.com/Volodymyr-Bauzi/PC-Volume-controll-using-mobile/releases/download/v[0-9]*\.[0-9]*\.[0-9]*/|https://github.com/Volodymyr-Bauzi/PC-Volume-controll-using-mobile/releases/download/${VERSION}/|g' README.md
           
       - name: Commit and push changes
         run: |
-          git config --global user.name 'GitHub Actions'
-          git config --global user.email 'actions@github.com'
-          git add README.md
-          git diff --quiet && git diff --staged --quiet || git commit -m "Update download links for ${GITHUB_REF_NAME}"
-          git push
+          # Check if there are any changes to commit
+          if ! git diff --quiet README.md; then
+            git add README.md
+            git commit -m "docs: update download links for ${GITHUB_REF_NAME}"
+            git push origin main
+            echo "Updated README with new version links"
+          else
+            echo "No changes to commit in README"
+          fi
