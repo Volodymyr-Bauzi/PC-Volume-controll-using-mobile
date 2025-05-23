@@ -46,9 +46,131 @@ We provide pre-built packages for easy installation. Please visit our [Releases 
 ## 🛠️ Development Setup
 
 ### Prerequisites
-- Node.js 16+ and npm 7+
+- Node.js 18+ and npm 9+ or pnpm 8+
 - Git
-- (Optional) Yarn or pnpm
+- (Windows) Windows Build Tools (for native modules)
+- (Linux) Build essentials and Python (for node-gyp)
+
+### Getting Started
+
+1. **Clone the repository**
+   ```bash
+   git clone https://github.com/Volodymyr-Bauzi/PC-Volume-controll-using-mobile.git
+   cd PC-Volume-controll-using-mobile
+   ```
+
+2. **Install dependencies**
+   ```bash
+   # Install root dependencies
+   npm install
+   
+   # Install frontend dependencies
+   cd frontend
+   npm install
+   
+   # Install backend dependencies
+   cd ../backend
+   npm install
+   ```
+
+3. **Set up environment variables**
+   - Copy `.env.example` to `.env.development` in the root directory
+   - Update the values as needed (defaults should work for local development)
+
+4. **Start the development servers**
+   ```bash
+   # From the root directory
+   npm run dev
+   ```
+   This will start both the frontend (port 3000) and backend (port 3001) in development mode with hot-reload.
+
+5. **Access the application**
+   - Frontend: http://localhost:3000
+   - Backend API: http://localhost:3001
+
+## 🚀 Production Setup
+
+### Prerequisites
+- Node.js 18+ and npm 9+ or pnpm 8+
+- (Optional) PM2 for process management
+- (Optional) Nginx or similar reverse proxy for production
+
+### Building for Production
+
+1. **Build the application**
+   ```bash
+   # From the root directory
+   npm run build
+   ```
+   This will build both the frontend and backend for production.
+
+2. **Set up environment variables**
+   - Create a `.env.production` file in the root directory
+   - Configure production-specific settings (see `.env.example` for reference)
+   - **Important**: Set secure values for production (HTTPS, CORS, etc.)
+
+3. **Start the production server**
+   ```bash
+   # From the backend directory
+   cd backend
+   npm start
+   ```
+   The application will be available at the configured domain/port.
+
+### Using PM2 (Recommended for Production)
+
+1. Install PM2 globally:
+   ```bash
+   npm install -g pm2
+   ```
+
+2. Start the application with PM2:
+   ```bash
+   # From the backend directory
+   cd backend
+   pm2 start npm --name "volume-control" -- start
+   ```
+
+3. Save the PM2 process list and set up startup script:
+   ```bash
+   pm2 save
+   pm2 startup
+   ```
+
+### Environment Variables
+
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `NODE_ENV` | Environment (development/production) | `development` |
+| `VITE_PORT` | Frontend development server port | `3000` |
+| `VITE_API_PORT` | Backend API port | `3001` |
+| `VITE_API_URL` | API base URL (auto-configured) | - |
+| `CORS_ORIGIN` | Allowed CORS origins | `http://localhost:3000` |
+| `WS_PROTOCOL` | WebSocket protocol (ws/wss) | `ws` (dev) / `wss` (prod) |
+| `WS_HOST` | WebSocket host | `localhost` |
+| `WS_PORT` | WebSocket port | `3001` |
+| `LOG_LEVEL` | Logging level | `debug` (dev) / `info` (prod) |
+
+## 🔧 Troubleshooting
+
+### Common Issues
+
+- **Native module build fails**
+  - Ensure you have the required build tools installed
+  - On Windows: `npm install --global --production windows-build-tools`
+  - On Ubuntu/Debian: `sudo apt-get install -y build-essential python3`
+
+- **Port already in use**
+  - Check for other processes using ports 3000 or 3001
+  - Update the ports in `.env.development` if needed
+
+- **CORS errors**
+  - Ensure `CORS_ORIGIN` is correctly set in your environment variables
+  - In development, make sure the frontend URL matches the allowed origins
+
+- **WebSocket connection issues**
+  - Check that the WebSocket URL is correctly configured
+  - Ensure your reverse proxy (if any) is configured to handle WebSocket connections
 
 ### Getting Started
 

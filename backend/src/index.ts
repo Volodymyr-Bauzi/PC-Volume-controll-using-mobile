@@ -1,16 +1,12 @@
 import { AudioManager } from "./audioManager";
 
-// List all audio apps
-console.log("== Active Audio Applications ==");
+// List all audio apps on startup for debugging
 const apps = AudioManager.getApplications();
-apps.forEach((app) => {
-  console.log(`- ${app.name} (PID: ${app.pid}) → Volume: ${app.volume}%`);
-});
+console.log("Audio Mixer Backend started.");
+console.log(`Found ${apps.length} active audio applications.`);
 
-// Example: set volume to 30% for Chrome
-const target = "chrome.exe";
-console.log(`\nSetting ${target} to 30% volume...`);
-AudioManager.setVolume(target, 30);
-
-// Example: mute Spotify
-// AudioManager.muteApplication("spotify.exe", true);
+// Uncomment for debugging
+// console.log("== Active Audio Applications ==");
+// apps.forEach((app) => {
+//   console.log(`- ${app.name} (PID: ${app.pid}) → Volume: ${app.volume}%`);
+// });

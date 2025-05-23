@@ -6,23 +6,43 @@ import cors, { CorsOptions } from 'cors';
 import bodyParser from 'body-parser';
 import { AudioManager } from './audioManager';
 import path from 'path';
+import { networkInterfaces } from 'os';
 
-// Load environment variables
-const HOST = process.env.HOST || '0.0.0.0';
-const PORT = parseInt(process.env.PORT || '8000', 10);
+// Load environment variables with defaults for development
 const NODE_ENV = process.env.NODE_ENV || 'development';
-const CORS_ORIGIN = process.env.CORS_ORIGIN || 'http://localhost:3000';
-const LOG_LEVEL = process.env.LOG_LEVEL || 'info';
+const IS_DEVELOPMENT = NODE_ENV === 'development';
+
+// Server configuration
+const HOST = process.env.BACKEND_HOST || '0.0.0.0';
+const PORT = parseInt(process.env.BACKEND_PORT || '3001', 10);
+const CORS_ORIGIN = process.env.CORS_ORIGIN || (IS_DEVELOPMENT ? 'http://localhost:3000' : '');
+const LOG_LEVEL = process.env.LOG_LEVEL || (IS_DEVELOPMENT ? 'debug' : 'info');
+
+// WebSocket configuration
+const WS_PROTOCOL = process.env.WS_PROTOCOL || (IS_DEVELOPMENT ? 'ws' : 'wss');
+const WS_HOST = process.env.WS_HOST || HOST;
+const WS_PORT = process.env.WS_PORT || PORT.toString();
+
+// Validate required environment variables in production
+if (!IS_DEVELOPMENT) {
+  const requiredVars = ['CORS_ORIGIN'];
+  const missingVars = requiredVars.filter(varName => !process.env[varName]);
+  
+  if (missingVars.length > 0) {
+    console.error(`Missing required environment variables: ${missingVars.join(', ')}`);
+    process.exit(1);
+  }
+}
 
 // Get local IP for display
-const os = require('os');
-const networkInterfaces = os.networkInterfaces();
 let localIP = HOST;
 if (HOST === '0.0.0.0') {
   // Find the first non-internal IPv4 address
-  for (const interfaceName in networkInterfaces) {
-    const networkInterface = networkInterfaces[interfaceName];
+  const nets = networkInterfaces();
+  for (const interfaceName of Object.keys(nets)) {
+    const networkInterface = nets[interfaceName] || [];
     for (const entry of networkInterface) {
+      // Skip over non-IPv4 and internal (loopback) addresses
       if (entry.family === 'IPv4' && !entry.internal) {
         localIP = entry.address;
         break;
@@ -77,9 +97,30 @@ interface WebSocketMessage {
 
 type WebSocketClient = WebSocket;
 
+// Create Express app and HTTP server
 const app = express();
 const server = http.createServer(app);
-const wss = new WebSocket.Server({ server });
+
+// Configure WebSocket server with client tracking
+const wss = new WebSocket.Server({
+  server,
+  clientTracking: true,
+  // Disable the per-message deflate to reduce memory usage
+  perMessageDeflate: {
+    zlibDeflateOptions: {
+      // See zlib defaults
+      chunkSize: 1024,
+      memLevel: 7,
+      level: 3,
+    },
+    // Other options
+    clientNoContextTakeover: true, // Default: true
+    serverNoContextTakeover: true, // Default: true
+    serverMaxWindowBits: 10, // Default: 10
+    concurrencyLimit: 10, // Default: 10
+    threshold: 1024, // Size (in bytes) below which messages should not be compressed
+  },
+});
 
 // Middleware
 app.use(cors(corsOptions));

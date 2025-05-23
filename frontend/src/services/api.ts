@@ -1,28 +1,39 @@
 import axios from 'axios';
 import type { CancelTokenSource } from 'axios';
 
-// Get API port from environment variables with fallback to 8001
-const API_PORT = import.meta.env.VITE_API_PORT || 8001;
+// Get configuration from environment variables
+const API_PORT = import.meta.env.VITE_API_PORT || 3001;
+const PROTOCOL = window.location.protocol;
+const HOST = window.location.hostname;
+const IS_DEVELOPMENT = import.meta.env.DEV;
 
-// Function to get the current hostname (supports both development and production)
+// Function to get the API base URL
 const getApiBaseUrl = () => {
-  try {
-    // In development, use the current hostname and specified port
-    if (import.meta.env.DEV) {
-      const hostname = window.location.hostname;
-      return `http://${hostname}:${API_PORT}`;
-    }
-    // In production, use the current origin (handles both HTTP and HTTPS)
-    return window.location.origin;
-  } catch (error) {
-    console.error('Error determining API base URL:', error);
-    // Fallback to localhost if there's an error
-    return `http://localhost:${API_PORT}`;
+  if (IS_DEVELOPMENT) {
+    // In development, use the Vite dev server proxy or direct to backend
+    return `${PROTOCOL}//${HOST}:${API_PORT}`;
   }
+  // In production, use the same origin or configured production URL
+  const productionApiUrl = import.meta.env.VITE_API_URL || window.location.origin;
+  return productionApiUrl;
+};
+
+// Function to get WebSocket URL
+const getWebSocketUrl = () => {
+  if (IS_DEVELOPMENT) {
+    return `ws://${HOST}:${API_PORT}`;
+  }
+  // In production, use wss:// for secure WebSocket
+  const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+  return `${wsProtocol}//${window.location.host}`;
 };
 
 const API_BASE_URL = getApiBaseUrl();
+const WS_BASE_URL = getWebSocketUrl();
+
+console.log('Environment:', IS_DEVELOPMENT ? 'Development' : 'Production');
 console.log('API Base URL:', API_BASE_URL);
+console.log('WebSocket URL:', WS_BASE_URL);
 
 export interface Application {
   name: string;

@@ -92,6 +92,13 @@ const VolumeSliderComponent: React.FC<VolumeSliderProps> = ({
         disabled={disabled}
         onChange={handleVolumeChange}
         onPointerDown={handlePointerDown}
+        onPointerMove={(e) => {
+          if (isSliderDragging) {
+            const input = e.target as HTMLInputElement;
+            const newValue = parseFloat(input.value);
+            onChange?.(newValue);
+          }
+        }}
         className={styles.sliderInput}
         aria-label={props['aria-label']}
         aria-orientation={orientation}
@@ -106,6 +113,13 @@ const VolumeSliderComponent: React.FC<VolumeSliderProps> = ({
 
 /**
  * A customizable volume slider component with smooth animations and accessibility features.
+ * 
+ * Features:
+ * - Real-time updates while dragging
+ * - Accessible with proper ARIA attributes
+ * - Smooth animations for better UX
+ * - Support for both horizontal and vertical orientations
+ * - Disabled state support
  */
 export const VolumeSlider = memo(VolumeSliderComponent);
 VolumeSlider.displayName = 'VolumeSlider';
