@@ -1,0 +1,66 @@
+body {
+  margin: 0;
+  padding: 0;
+  min-height: 100vh;
+}
+
+#root {
+  min-height: 100vh;
+}
+
+/* Theme transitions */
+*, *::before, *::after {
+  transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+}
+
+/* Dark theme specific styles */
+[data-mantine-color-scheme='dark'] {
+  background-color: var(--mantine-color-dark-7);
+}
+
+[data-mantine-color-scheme='dark'] body,
+[data-mantine-color-scheme='dark'] .mantine-AppShell-main,
+[data-mantine-color-scheme='dark'] .mantine-Text-root,
+[data-mantine-color-scheme='dark'] .mantine-Title-root {
+  color: white;
+}
+
+[data-mantine-color-scheme='dark'] .mantine-AppShell-main {
+  background-color: var(--mantine-color-dark-8);
+}
+
+/* Light theme specific styles */
+[data-mantine-color-scheme='light'] {
+  background-color: var(--mantine-color-gray-0);
+}
+
+[data-mantine-color-scheme='light'] body,
+[data-mantine-color-scheme='light'] .mantine-AppShell-main,
+[data-mantine-color-scheme='light'] .mantine-Text-root,
+[data-mantine-color-scheme='light'] .mantine-Title-root {
+  color: var(--mantine-color-dark-9);
+}
+
+[data-mantine-color-scheme='light'] .mantine-AppShell-main {
+  background-color: var(--mantine-color-white);
+}
+
+/* Ensure menu is positioned correctly */
+.mantine-Menu-dropdown {
+  position: fixed !important;
+  z-index: 1000;
+  margin-top: 8px;
+}
+
+/* Ensure menu items are visible in both themes */
+.mantine-Menu-item {
+  color: inherit;
+}
+
+[data-mantine-color-scheme='dark'] .mantine-Menu-item {
+  color: var(--mantine-color-gray-0);
+}
+
+[data-mantine-color-scheme='light'] .mantine-Menu-item {
+  color: var(--mantine-color-dark-9);
+}

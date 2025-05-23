@@ -1,0 +1,26 @@
+{
+  "name": "macos-audio-control",
+  "version": "1.0.0",
+  "description": "Native addon for controlling audio on macOS",
+  "main": "index.js",
+  "scripts": {
+    "install": "node-gyp rebuild",
+    "build": "node-gyp rebuild",
+    "clean": "node-gyp clean"
+  },
+  "keywords": [
+    "audio",
+    "volume",
+    "macos",
+    "native-addon"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "node-addon-api": "^5.0.0"
+  },
+  "devDependencies": {
+    "node-gyp": "^9.0.0"
+  },
+  "gypfile": true
+}

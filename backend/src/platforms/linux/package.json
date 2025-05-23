@@ -1,0 +1,16 @@
+{
+  "name": "linux-audio-control",
+  "version": "1.0.0",
+  "description": "Linux audio control native addon using PulseAudio",
+  "main": "build/Release/linux-addon.node",
+  "scripts": {
+    "install": "node-gyp rebuild"
+  },
+  "dependencies": {
+    "node-addon-api": "^5.0.0"
+  },
+  "devDependencies": {
+    "node-gyp": "^9.0.0"
+  },
+  "gypfile": true
+}

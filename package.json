@@ -1,0 +1,45 @@
+{
+  "name": "volume-control",
+  "version": "1.0.0",
+  "private": false,
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Volodymyr-Bauzi/PC-Volume-controll-using-mobile.git"
+  },
+  "homepage": "https://github.com/Volodymyr-Bauzi/PC-Volume-controll-using-mobile#readme",
+  "bugs": {
+    "url": "https://github.com/Volodymyr-Bauzi/PC-Volume-controll-using-mobile/issues"
+  },
+  "keywords": [
+    "volume",
+    "control",
+    "remote",
+    "audio",
+    "windows",
+    "linux",
+    "mobile"
+  ],
+  "description": "Volume control application with frontend and backend",
+  "workspaces": [
+    "frontend",
+    "backend"
+  ],
+  "scripts": {
+    "start": "concurrently \"npm run backend\" \"npm run frontend\"",
+    "backend": "cd backend && npm run dev",
+    "frontend": "cd frontend && npm run dev",
+    "build": "npm run build --workspace=frontend && npm run build --workspace=backend",
+    "package": "node package-app.js",
+    "package:win": "node package-app.js win",
+    "package:linux": "node package-app.js linux",
+    "release": "standard-version",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2",
+    "standard-version": "^9.5.0",
+    "wait-on": "^8.0.3"
+  },
+  "author": "Volodymyr Bauzi",
+  "license": "MIT"
+}

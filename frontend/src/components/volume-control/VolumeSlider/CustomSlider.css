@@ -1,0 +1,143 @@
+.volume-slider {
+    --track-height: 4px;
+    --thumb-size: 16px;
+    --track-color: #e0e0e0;
+    --track-fill: #4a90e2;
+    --thumb-color: #fff;
+    --thumb-hover: #f1f1f1;
+    --thumb-active: #e0e0e0;
+    --thumb-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    --thumb-border: 1px solid rgba(0, 0, 0, 0.1);
+    
+    display: flex;
+    align-items: center;
+    padding: 12px 0;
+    position: relative;
+}
+
+/* Horizontal slider styles */
+.volume-slider.horizontal {
+    width: 100%;
+    padding: 0 12px;
+}
+
+/* Vertical slider styles */
+.volume-slider.vertical {
+    height: 100%;
+    min-height: 120px;
+    justify-content: center;
+    padding: 12px 0;
+}
+
+/* Hide default input styles */
+.slider-input {
+    -webkit-appearance: none;
+    appearance: none;
+    background: transparent;
+    outline: none;
+    margin: 0;
+    width: 100%;
+    height: var(--thumb-size);
+    cursor: pointer;
+}
+
+/* For Webkit browsers (Chrome, Safari) */
+.slider-input::-webkit-slider-runnable-track {
+    background: var(--track-color);
+    height: var(--track-height);
+    border-radius: 4px;
+    position: relative;
+}
+
+.slider-input::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: var(--thumb-size);
+    height: var(--thumb-size);
+    background: var(--thumb-color);
+    border: var(--thumb-border);
+    border-radius: 50%;
+    box-shadow: var(--thumb-shadow);
+    margin-top: calc((var(--thumb-size) - var(--track-height)) / -2);
+    transition: transform 0.1s ease, box-shadow 0.1s ease;
+    cursor: pointer;
+}
+
+/* For Firefox */
+.slider-input::-moz-range-track {
+    background: var(--track-color);
+    height: var(--track-height);
+    border-radius: 4px;
+}
+
+.slider-input::-moz-range-thumb {
+    width: var(--thumb-size);
+    height: var(--thumb-size);
+    background: var(--thumb-color);
+    border: var(--thumb-border);
+    border-radius: 50%;
+    box-shadow: var(--thumb-shadow);
+    transition: transform 0.1s ease, box-shadow 0.1s ease;
+    cursor: pointer;
+}
+
+/* Fill track for Webkit */
+.slider-input::-webkit-slider-runnable-track::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: var(--fill-percentage, 0);
+    background: var(--track-fill);
+    border-radius: 4px;
+    z-index: 1;
+}
+
+/* Fill track for Firefox */
+.slider-input::-moz-range-progress {
+    height: 100%;
+    background: var(--track-fill);
+    border-radius: 4px;
+}
+
+/* Hover and active states */
+.slider-input:not(:disabled):hover::-webkit-slider-thumb {
+    background: var(--thumb-hover);
+    transform: scale(1.1);
+}
+
+.slider-input:not(:disabled):active::-webkit-slider-thumb {
+    background: var(--thumb-active);
+    transform: scale(0.95);
+}
+
+.slider-input:not(:disabled):hover::-moz-range-thumb {
+    background: var(--thumb-hover);
+    transform: scale(1.1);
+}
+
+.slider-input:not(:disabled):active::-moz-range-thumb {
+    background: var(--thumb-active);
+    transform: scale(0.95);
+}
+
+/* Disabled state */
+.volume-slider.disabled .slider-input {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+/* Vertical slider specific styles */
+.volume-slider.vertical .slider-input {
+    transform: rotate(-90deg);
+    width: 100px;
+    margin: 40px 0;
+}
+
+/* Focus styles for accessibility */
+.slider-input:focus-visible {
+    outline: 2px solid #4a90e2;
+    outline-offset: 2px;
+    border-radius: 4px;
+}

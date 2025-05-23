@@ -1,0 +1,301 @@
+.volumeSlider {
+  /* Theme-aware background variables */
+  --background: light-dark(var(--mantine-color-white), var(--mantine-color-dark-7));
+  --card-bg: light-dark(var(--mantine-color-gray-0), var(--mantine-color-dark-6));
+  --text-color: light-dark(var(--mantine-color-gray-9), var(--mantine-color-gray-1));
+
+  /* Base variables */
+  --track-height: 8px;
+  --thumb-size: 22px;
+  --transition-speed: 0.2s;
+  --track-radius: 8px;
+
+  /* Theme-aware variables */
+  --track-bg: light-dark(var(--mantine-color-gray-2), var(--mantine-color-dark-4));
+  --track-fill: light-dark(var(--mantine-color-blue-6), var(--mantine-color-blue-4));
+  --thumb-bg: light-dark(var(--mantine-color-gray-0), var(--mantine-color-dark-2));
+  --thumb-border: light-dark(1px solid var(--mantine-color-gray-5), 1px solid var(--mantine-color-dark-3));
+  --thumb-shadow: light-dark(
+    0 2px 6px rgba(0, 0, 0, 0.15),
+    0 2px 6px rgba(0, 0, 0, 0.3)
+  );
+
+  /* Light theme (default) */
+  --track-shadow: inset 2px 2px 4px rgba(0, 0, 0, 0.1),
+                  inset -1px -1px 2px rgba(255, 255, 255, 0.5);
+  --thumb-hover-scale: 1.2;
+  --thumb-active-scale: 0.9;
+  --thumb-hover-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+  --focus-ring: 0 0 0 3px rgba(99, 102, 241, 0.5);
+  --glow: 0 0 15px rgba(255, 255, 255, 0.6);
+  --track-shine: linear-gradient(
+    to right,
+    rgba(255, 255, 255, 0.1) 0%,
+    rgba(255, 255, 255, 0.3) 50%,
+    rgba(255, 255, 255, 0.1) 100%
+  );
+
+  /* Apply background styles */
+  background-color: var(--background);
+  color: var(--text-color);
+
+  display: flex;
+  align-items: center;
+  padding: 16px 0;
+  position: relative;
+  width: 100%;
+  transition: all var(--transition-speed) ease;
+}
+
+.volumeSlider.vertical {
+  height: 100%;
+  min-height: 140px;
+  justify-content: center;
+  padding: 0 16px;
+}
+
+.sliderInput {
+  -webkit-appearance: none;
+  appearance: none;
+  background: transparent;
+  outline: none;
+  margin: 0;
+  width: 100%;
+  height: var(--thumb-size);
+  cursor: pointer;
+  transition: all var(--transition-speed) ease;
+  position: relative;
+  z-index: 1;
+}
+
+/* Webkit Track */
+.sliderInput::-webkit-slider-runnable-track {
+  background: var(--track-bg);
+  height: var(--track-height);
+  border-radius: var(--track-radius);
+  position: relative;
+  transition: all var(--transition-speed) ease;
+  box-shadow: var(--track-shadow);
+  background-image: var(--track-shine);
+  background-size: 200% 100%;
+  animation: shine 3s infinite linear;
+}
+
+/* Webkit Thumb */
+.sliderInput::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: var(--thumb-size);
+  height: var(--thumb-size);
+  background: var(--thumb-bg);
+  border: var(--thumb-border);
+  border-radius: 50%;
+  box-shadow: 
+    var(--thumb-shadow),
+    var(--glow);
+  margin-top: calc((var(--thumb-size) - var(--track-height)) / -2);
+  transition: all var(--transition-speed) ease;
+  cursor: pointer;
+  position: relative;
+  z-index: 2;
+  transform-origin: center;
+}
+
+/* Firefox Track */
+.sliderInput::-moz-range-track {
+  background: var(--track-bg);
+  height: var(--track-height);
+  border-radius: var(--track-radius);
+  box-shadow: var(--track-shadow);
+  background-image: var(--track-shine);
+  background-size: 200% 100%;
+  animation: shine 3s infinite linear;
+}
+
+/* Firefox Thumb */
+.sliderInput::-moz-range-thumb {
+  width: var(--thumb-size);
+  height: var(--thumb-size);
+  background: var(--thumb-bg);
+  border: var(--thumb-border);
+  border-radius: 50%;
+  box-shadow: 
+    var(--thumb-shadow),
+    var(--glow);
+  transition: all var(--transition-speed) ease;
+  cursor: pointer;
+  position: relative;
+  z-index: 2;
+  transform-origin: center;
+}
+
+/* Webkit Fill Track */
+.sliderInput::-webkit-slider-runnable-track::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: var(--fill-percentage, 0);
+  background: var(--track-fill);
+  background-size: 200% 100%;
+  border-radius: var(--track-radius);
+  z-index: 1;
+  transition: width 0.1s ease, background-position 0.3s ease;
+  box-shadow: 
+    inset 0 1px 2px rgba(255, 255, 255, 0.3),
+    0 0 10px rgba(255, 255, 255, 0.2);
+  animation: gradientShift 8s ease infinite;
+}
+
+@keyframes gradientShift {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+@keyframes shine {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* Firefox Fill Track */
+.sliderInput::-moz-range-progress {
+  height: 100%;
+  background: var(--track-fill);
+  border-radius: var(--track-radius);
+  transition: width 0.1s ease;
+}
+
+/* Hover States */
+.volumeSlider:not(.disabled):hover {
+  --thumb-shadow: var(--thumb-hover-shadow);
+}
+
+.sliderInput:not(:disabled):hover::-webkit-slider-thumb {
+  transform: scale(var(--thumb-hover-scale));
+  box-shadow: var(--thumb-hover-shadow);
+}
+
+.sliderInput:not(:disabled):active::-webkit-slider-thumb {
+  transform: scale(var(--thumb-active-scale));
+}
+
+.sliderInput:not(:disabled):hover::-moz-range-thumb {
+  transform: scale(var(--thumb-hover-scale));
+  box-shadow: var(--thumb-hover-shadow);
+}
+
+.sliderInput:not(:disabled):active::-moz-range-thumb {
+  transform: scale(var(--thumb-active-scale));
+}
+
+/* Disabled State */
+.volumeSlider.disabled .sliderInput {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.volumeSlider.disabled .sliderInput::-webkit-slider-thumb {
+  transform: scale(1);
+  box-shadow: var(--thumb-shadow);
+}
+
+.volumeSlider.disabled .sliderInput::-moz-range-thumb {
+  transform: scale(1);
+  box-shadow: var(--thumb-shadow);
+}
+
+/* Vertical Slider */
+.volumeSlider.vertical .sliderInput {
+  transform: rotate(-90deg);
+  width: 120px;
+  margin: 40px 0;
+}
+
+/* Focus Styles */
+.sliderInput:focus-visible {
+  outline: none;
+}
+
+.sliderInput:focus-visible::-webkit-slider-thumb {
+  box-shadow: var(--focus-ring), var(--thumb-hover-shadow);
+  transform: scale(var(--thumb-hover-scale));
+}
+
+.sliderInput:focus-visible::-moz-range-thumb {
+  box-shadow: var(--focus-ring), var(--thumb-hover-shadow);
+  transform: scale(var(--thumb-hover-scale));
+}
+
+/* Smooth transitions for all interactive states */
+.sliderInput,
+.sliderInput::-webkit-slider-thumb,
+.sliderInput::-moz-range-thumb,
+.sliderInput::-webkit-slider-runnable-track,
+.sliderInput::-moz-range-track {
+  transition: all var(--transition-speed) ease;
+}
+
+/* Animation for value changes */
+@keyframes pulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.1); }
+  100% { transform: scale(1); }
+}
+
+.volumeSlider:not(.disabled) .sliderInput:active::-webkit-slider-thumb {
+  animation: pulse 0.3s ease;
+}
+
+.volumeSlider:not(.disabled) .sliderInput:active::-moz-range-thumb {
+  animation: pulse 0.3s ease;
+}
+
+/* Dark mode specific enhancements */
+[data-mantine-color-scheme="dark"] .volumeSlider {
+  --background: var(--mantine-color-dark-8);
+  --card-bg: var(--mantine-color-dark-7);
+  --text-color: var(--mantine-color-gray-0);
+
+  --track-fill: linear-gradient(
+    90deg,
+    var(--mantine-color-pink-6),
+    var(--mantine-color-orange-6),
+    var(--mantine-color-yellow-6),
+    var(--mantine-color-lime-6),
+    var(--mantine-color-cyan-6),
+    var(--mantine-color-violet-6)
+  );
+  --thumb-bg: var(--mantine-color-dark-1);
+  --thumb-border: 1px solid var(--mantine-color-gray-7);
+  --thumb-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+}
+
+.volumeSliderCard {
+  background-color: var(--card-bg);
+}
+
+.track {
+  height: var(--track-height);
+  background-color: var(--track-bg);
+  border-radius: var(--track-radius);
+}
+
+.trackFilled {
+  background-color: var(--track-fill);
+  border-radius: var(--track-radius);
+}
+
+.thumb {
+  width: var(--thumb-size);
+  height: var(--thumb-size);
+  background-color: var(--thumb-bg);
+  border: var(--thumb-border);
+  box-shadow: var(--thumb-shadow);
+  transition: all var(--transition-speed) ease;
+}
+
+.thumb:hover {
+  transform: scale(1.1);
+}
