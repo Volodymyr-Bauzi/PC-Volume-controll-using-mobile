@@ -16,12 +16,12 @@ A sleek, responsive web application that transforms your mobile device into a re
 We provide pre-built packages for easy installation:
 
 ### Windows
-- [Download for Windows 10/11 (64-bit)](https://github.com/yourusername/volume-control/releases/latest/download/volume-control-windows-x64.exe)
-- [Download for Windows 7/8.1 (32-bit)](https://github.com/yourusername/volume-control/releases/latest/download/volume-control-windows-ia32.exe)
+- [Download for Windows 10/11 (64-bit)](https://github.com/Volodymyr-Bauzi/PC-Volume-controll-using-mobile/releases/download/${VERSION}/volume-control-windows-x64.exe)
+- [Download for Windows 7/8.1 (32-bit)](https://github.com/Volodymyr-Bauzi/PC-Volume-controll-using-mobile/releases/download/${VERSION}/volume-control-windows-ia32.exe)
 
 ### Linux
-- [Download for Linux (64-bit)](https://github.com/yourusername/volume-control/releases/latest/download/volume-control-linux-x64)
-- [Download for Linux (ARM64)](https://github.com/yourusername/volume-control/releases/latest/download/volume-control-linux-arm64)
+- [Download for Linux (64-bit)](https://github.com/Volodymyr-Bauzi/PC-Volume-controll-using-mobile/releases/download/${VERSION}/volume-control-linux-x64)
+- [Download for Linux (ARM64)](https://github.com/Volodymyr-Bauzi/PC-Volume-controll-using-mobile/releases/download/${VERSION}/volume-control-linux-arm64)
 
 ## 🛠️ Installation
 
