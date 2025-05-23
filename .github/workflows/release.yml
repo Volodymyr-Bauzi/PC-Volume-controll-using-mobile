@@ -11,14 +11,11 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [windows-latest, ubuntu-latest]
+        os: [windows-latest]
         include:
           - os: windows-latest
             artifact: windows
             build_cmd: npm run package:win
-          - os: ubuntu-latest
-            artifact: linux
-            build_cmd: npm run package:linux
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
