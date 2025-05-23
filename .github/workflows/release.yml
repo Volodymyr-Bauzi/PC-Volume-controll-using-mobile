@@ -19,6 +19,7 @@ jobs:
           - os: ubuntu-latest
             artifact: linux
             build_cmd: npm run package:linux
+            
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
