@@ -8,6 +8,12 @@ node_modules/
 /build
 /.vite
 *.exe
+*.zip
+*.7z
+*.tar.gz
+*.pkg
+*.dmg
+*.msi
 *.pdb
 *.ilk
 *.lib
