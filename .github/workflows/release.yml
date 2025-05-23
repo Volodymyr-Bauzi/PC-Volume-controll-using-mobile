@@ -11,11 +11,14 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [windows-latest]
+        os: [windows-latest, ubuntu-latest]
         include:
           - os: windows-latest
             artifact: windows
             build_cmd: npm run package:win
+          - os: ubuntu-latest
+            artifact: linux
+            build_cmd: npm run package:linux
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
@@ -30,7 +33,7 @@ jobs:
         if: matrix.os == 'ubuntu-latest'
         run: |
           sudo apt-get update
-          sudo apt-get install -y libpulse-dev build-essential
+          sudo apt-get install -y libpulse-dev build-essential libasound2-dev libpulse-mainloop-glib0
 
       - name: Install Node.js dependencies
         run: npm ci
