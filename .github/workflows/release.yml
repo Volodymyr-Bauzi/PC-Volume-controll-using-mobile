@@ -42,14 +42,17 @@ jobs:
       - name: Build application
         run: ${{ matrix.build_cmd }}
 
+      - name: Find and list build artifacts
+        id: find-files
+        run: |
+          find dist/ -type f -name "*" -exec ls -la {} \;
+          echo "ARTIFACTS=$(find dist/ -type f -name "*.exe" -o -name "*.AppImage" -o -name "*.deb" -o -name "*.rpm" | tr '\n' ' ')" >> $GITHUB_OUTPUT
+          
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.artifact }}
-          path: |
-            dist/*
-            !dist/win-unpacked/
-            !dist/linux-unpacked/
+          path: dist/
           if-no-files-found: error
           retention-days: 1
 
@@ -57,28 +60,37 @@ jobs:
     name: Create Release
     needs: build
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      
     steps:
       - name: Download Windows artifacts
         uses: actions/download-artifact@v4
         with:
           name: windows
           path: dist/windows
+          if-no-files-found: warn
 
       - name: Download Linux artifacts
         uses: actions/download-artifact@v4
         with:
           name: linux
           path: dist/linux
+          if-no-files-found: warn
 
-      - name: List files for debugging
+      - name: Find and list all files
         run: |
-          ls -R dist/
+          find . -type f | sort
+          echo "--- Contents of dist/ ---"
+          ls -la dist/
+          echo "--- Contents of dist/windows/ ---"
+          ls -la dist/windows/ || echo "No windows directory"
+          echo "--- Contents of dist/linux/ ---"
+          ls -la dist/linux/ || echo "No linux directory"
           
       - name: Create Release
         id: create_release
         uses: softprops/action-gh-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           tag_name: ${{ github.ref }}
           name: Release ${{ github.ref_name }}
@@ -92,10 +104,12 @@ jobs:
           draft: false
           prerelease: false
           files: |
-            dist/*.exe
-            dist/*.AppImage
-            dist/*.deb
-            dist/*.rpm
+            dist/**/*.exe
+            dist/**/*.AppImage
+            dist/**/*.deb
+            dist/**/*.rpm
+            dist/**/*.zip
+            dist/**/*.dmg
 
   update-readme:
     name: Update README
