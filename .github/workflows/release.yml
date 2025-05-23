@@ -5,9 +5,12 @@ on:
     tags:
       - 'v*' # Push events matching v1.0, v20.15.10, etc.
 
+permissions:
+  contents: write
+
 jobs:
   build:
-    name: Build and Release
+    name: Build and Package
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
@@ -16,13 +19,15 @@ jobs:
           - os: windows-latest
             artifact: windows
             build_cmd: npm run package:win
+            dist_dir: win
           - os: ubuntu-latest
             artifact: linux
             build_cmd: npm run package:linux
+            dist_dir: linux
             
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
@@ -41,55 +46,73 @@ jobs:
 
       - name: Build application
         run: ${{ matrix.build_cmd }}
+        
+      - name: List files in dist directory
+        run: |
+          echo "--- Contents of dist/ ---"
+          ls -la dist/
+          echo "--- Contents of dist/${{ matrix.dist_dir }}/ ---"
+          ls -la dist/${{ matrix.dist_dir }} || echo "Directory not found"
+
+      - name: Create release directory
+        run: mkdir -p release
+
+      - name: Package release
+        run: node package-release.js
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.artifact }}
-          path: dist/
+          path: |
+            dist/${{ matrix.dist_dir }}
+            release/volume-control-${{ matrix.artifact }}-v*.zip
           if-no-files-found: error
+          retention-days: 1
 
   create-release:
     name: Create Release
     needs: build
     runs-on: ubuntu-latest
     steps:
-      - name: Download Windows artifacts
+      - name: Download artifacts
         uses: actions/download-artifact@v4
         with:
-          name: windows
-          path: dist/windows
+          path: artifacts
+          pattern: '*.zip'
+          create-top-level-directory: false
 
-      - name: Download Linux artifacts
-        uses: actions/download-artifact@v4
-        with:
-          name: linux
-          path: dist/linux
+      - name: List downloaded files
+        run: find . -type f -name '*.zip' -exec ls -la {} \;
 
       - name: Create Release
         id: create_release
         uses: softprops/action-gh-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           tag_name: ${{ github.ref }}
           name: Release ${{ github.ref_name }}
           body: |
-            ## What's Changed
-            - New release with pre-built packages for Windows and Linux
+            ## What's New in ${{ github.ref_name }}
+            - Pre-built packages for Windows and Linux
+            - Improved packaging and distribution
             
             ### Download Links
-            - **Windows x64**: [volume-control-windows-x64.exe](https://github.com/Volodymyr-Bauzi/PC-Volume-controll-using-mobile/releases/download/${{ github.ref_name }}/volume-control-windows-x64.exe)
-            - **Linux x64**: [volume-control-linux-x64](https://github.com/Volodymyr-Bauzi/PC-Volume-controll-using-mobile/releases/download/${{ github.ref_name }}/volume-control-linux-x64)
+            - **Windows x64**: [volume-control-windows-v${{ github.ref_name }}.zip](https://github.com/Volodymyr-Bauzi/PC-Volume-controll-using-mobile/releases/download/${{ github.ref_name }}/volume-control-windows-v${{ github.ref_name }}.zip)
+            - **Linux x64**: [volume-control-linux-v${{ github.ref_name }}.zip](https://github.com/Volodymyr-Bauzi/PC-Volume-controll-using-mobile/releases/download/${{ github.ref_name }}/volume-control-linux-v${{ github.ref_name }}.zip)
             
-            ### Checksums
-            ```
-            Windows x64: ${{ hashFiles('dist/windows/volume-control-windows-x64.exe') }}
-            Linux x64: ${{ hashFiles('dist/linux/volume-control-linux-x64') }}
-            ```
+            ### Installation
+            1. Download the appropriate zip file for your platform
+            2. Extract the zip file
+            3. Run the application:
+               - Windows: Double-click `volume-control.exe`
+               - Linux: Run `chmod +x volume-control` then `./volume-control`
           draft: false
           prerelease: false
           files: |
-            dist/windows/volume-control-windows-x64.exe
-            dist/linux/volume-control-linux-x64
+            artifacts/volume-control-windows-*.zip
+            artifacts/volume-control-linux-*.zip
 
   update-readme:
     name: Update README
