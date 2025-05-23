@@ -194,6 +194,7 @@ export const useVolumeControl = (initialApplications: Application[] = []) => {
     error,
     handleVolumeChange,
     handleVolumeChangeEnd,
+    handleWebSocketVolumeChange,
     refresh: fetchApplications,
   };
 };
