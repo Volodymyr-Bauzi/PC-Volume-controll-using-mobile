@@ -86,6 +86,34 @@ jobs:
           New-Item -ItemType Directory -Force -Path release | Out-Null
           node package-release.js
 
+      - name: Rename release files for Windows
+        if: matrix.os == 'windows-latest'
+        run: |
+          $version = (Get-Content package.json | ConvertFrom-Json).version
+          $windowsZip = Get-ChildItem -Path release -Filter "volume-control-windows-*.zip" | Select-Object -First 1
+          if ($windowsZip) {
+            $newName = "volume-control-windows-v$version.zip"
+            Rename-Item -Path $windowsZip.FullName -NewName $newName -Force
+            Write-Host "Renamed $($windowsZip.Name) to $newName"
+          } else {
+            Write-Error "Windows release zip not found"
+            exit 1
+          }
+
+      - name: Rename release files for Linux
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          version=$(node -p "require('./package.json').version")
+          linux_zip=$(find release -name "volume-control-linux-*.zip" | head -1)
+          if [ -f "$linux_zip" ]; then
+            new_name="volume-control-linux-v$version.zip"
+            mv "$linux_zip" "release/$new_name"
+            echo "Renamed to $new_name"
+          else
+            echo "Linux release zip not found"
+            exit 1
+          fi
+
       - name: Upload artifacts (Windows)
         if: matrix.os == 'windows-latest'
         uses: actions/upload-artifact@v4
@@ -180,7 +208,8 @@ jobs:
           VERSION: ${{ github.ref_name }}
         run: |
           # Update the download links
-          sed -i 's|https://github.com/Volodymyr-Bauzi/PC-Volume-controll-using-mobile/releases/download/v[0-9]*\.[0-9]*\.[0-9]*/|https://github.com/Volodymyr-Bauzi/PC-Volume-controll-using-mobile/releases/download/${VERSION}/|g' README.md
+          sed -i 's|https://github\.com/Volodymyr-Bauzi/PC-Volume-controll-using-mobile/releases/download/v[0-9]*\.[0-9]*\.[0-9]*/volume-control-windows-v[0-9]*\.[0-9]*\.[0-9]*\.zip|https://github.com/Volodymyr-Bauzi/PC-Volume-controll-using-mobile/releases/download/${VERSION}/volume-control-windows-v${VERSION}.zip|g' README.md
+          sed -i 's|https://github\.com/Volodymyr-Bauzi/PC-Volume-controll-using-mobile/releases/download/v[0-9]*\.[0-9]*\.[0-9]*/volume-control-linux-v[0-9]*\.[0-9]*\.[0-9]*\.zip|https://github.com/Volodymyr-Bauzi/PC-Volume-controll-using-mobile/releases/download/${VERSION}/volume-control-linux-v${VERSION}.zip|g' README.md
           
       - name: Commit and push changes
         run: |
