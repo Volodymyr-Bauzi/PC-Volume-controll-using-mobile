@@ -154,12 +154,12 @@ jobs:
       - name: Download artifacts
         uses: actions/download-artifact@v4
         with:
-          path: artifacts
-          pattern: '*.zip'
+          path: release
+          pattern: 'volume-control-*.zip'
           create-top-level-directory: false
 
       - name: List downloaded files
-        run: find . -type f -name '*.zip' -exec ls -la {} \;
+        run: find release -type f -name '*.zip' -exec ls -la {} \;
 
       - name: Create Release
         id: create_release
@@ -187,8 +187,8 @@ jobs:
           draft: false
           prerelease: false
           files: |
-            artifacts/volume-control-windows-*.zip
-            artifacts/volume-control-linux-*.zip
+            release/volume-control-windows-*.zip
+            release/volume-control-linux-*.zip
 
   update-readme:
     name: Update README
