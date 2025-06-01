@@ -175,8 +175,8 @@ jobs:
             - Improved packaging and distribution
             
             ### Download Links
-            - **Windows x64**: [volume-control-windows-v${{ github.ref_name }}.zip](https://github.com/Volodymyr-Bauzi/PC-Volume-controll-using-mobile/releases/download/${{ github.ref_name }}/volume-control-windows-v${{ github.ref_name }}.zip)
-            - **Linux x64**: [volume-control-linux-v${{ github.ref_name }}.zip](https://github.com/Volodymyr-Bauzi/PC-Volume-controll-using-mobile/releases/download/${{ github.ref_name }}/volume-control-linux-v${{ github.ref_name }}.zip)
+            - **Windows x64**: [volume-control-windows-${{ github.ref_name }}.zip](https://github.com/Volodymyr-Bauzi/PC-Volume-controll-using-mobile/releases/download/${{ github.ref_name }}/volume-control-windows-${{ github.ref_name }}.zip)
+            - **Linux x64**: [volume-control-linux-${{ github.ref_name }}.zip](https://github.com/Volodymyr-Bauzi/PC-Volume-controll-using-mobile/releases/download/${{ github.ref_name }}/volume-control-linux-${{ github.ref_name }}.zip)
             
             ### Installation
             1. Download the appropriate zip file for your platform
