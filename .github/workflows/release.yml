@@ -151,12 +151,17 @@ jobs:
     needs: build
     runs-on: ubuntu-latest
     steps:
-      - name: Download artifacts
+      - name: Download Windows artifacts
         uses: actions/download-artifact@v4
         with:
+          name: windows
           path: release
-          pattern: 'volume-control-*.zip'
-          create-top-level-directory: false
+
+      - name: Download Linux artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: linux
+          path: release
 
       - name: List downloaded files
         run: find release -type f -name '*.zip' -exec ls -la {} \;

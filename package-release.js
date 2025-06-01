@@ -87,6 +87,14 @@ platforms.forEach(platform => {
   } catch (error) {
     console.error(`  Error creating zip file: ${error.message}`);
   }
+  const artifactMapPath = path.join(releaseDir, 'artifacts.json');
+  const artifactMap = platforms.reduce((acc, platform) => {
+    const zipFileName = `volume-control-${platform.name}-${version}.zip`;
+    acc[platform.name] = path.join(releaseDir, zipFileName);
+    return acc;
+  }, {});
+  fs.writeFileSync(artifactMapPath, JSON.stringify(artifactMap, null, 2));
+
 });
 
 console.log('\nPackaging complete! Upload the zip files from the release directory to your GitHub release.');
