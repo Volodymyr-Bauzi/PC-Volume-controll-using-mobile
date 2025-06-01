@@ -18,31 +18,40 @@ class WebSocketService {
 
   private normalizeUrl(baseUrl: string): string {
     try {
-      const port = import.meta.env.VITE_API_PORT || 8001;
+      // In production, use the provided baseUrl or default to relative /ws
+      if (!import.meta.env.DEV) {
+        const wsPath = baseUrl.trim() || import.meta.env.VITE_WS_URL || 'ws';
+        if (wsPath.startsWith('ws')) {
+          return wsPath;
+        }
+        const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+        return `${protocol}//${window.location.host}${wsPath.startsWith('/') ? wsPath : `/${wsPath}`}`;
+      }
+
+      // In development, construct WebSocket URL with the correct port
+      const port = import.meta.env.VITE_WS_PORT || import.meta.env.VITE_API_PORT || 8777;
+      const host = window.location.hostname;
       
-      if (!baseUrl || baseUrl.trim() === '') {
-        console.warn('Empty API URL, using current hostname for WebSocket');
-        return `ws://${window.location.hostname}:${port}/ws`;
+      if (baseUrl && baseUrl.trim() !== '') {
+        // If baseUrl is a full URL, convert it to WebSocket URL
+        if (baseUrl.startsWith('http')) {
+          const url = new URL(baseUrl);
+          url.protocol = 'ws:';
+          return url.toString();
+        }
+        // If it's just a hostname or hostname:port, construct the WebSocket URL
+        const host = baseUrl.includes(':') ? baseUrl : `${baseUrl}:${port}`;
+        return `ws://${host}/ws`;
       }
       
-      // If baseUrl is a full URL, convert it to WebSocket URL
-      if (baseUrl.startsWith('http://') || baseUrl.startsWith('https://') || 
-          baseUrl.startsWith('ws://') || baseUrl.startsWith('wss://')) {
-        const url = new URL(baseUrl);
-        url.protocol = url.protocol === 'https:' ? 'wss:' : 'ws:';
-        url.pathname = '/ws';
-        return url.toString();
-      }
-      
-      // If it's just a hostname or hostname:port, construct the WebSocket URL
-      const host = baseUrl.includes(':') ? baseUrl : `${baseUrl}:${port}`;
-      return `ws://${host}/ws`;
+      // Default to current host with development port
+      return `ws://${host}:${port}/ws`;
       
     } catch (error) {
       console.error('Error creating WebSocket URL:', error);
-      // Fallback to localhost if there's an error
-      const port = import.meta.env.VITE_API_PORT || 8001;
-      return `ws://localhost:${port}/ws`;
+      // Fallback to development defaults
+      const port = import.meta.env.VITE_WS_PORT || import.meta.env.VITE_API_PORT || 8777;
+      return `ws://${window.location.hostname}:${port}/ws`;
     }
   }
 

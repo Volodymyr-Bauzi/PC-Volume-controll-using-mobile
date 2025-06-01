@@ -21,15 +21,21 @@ export const useSystemVolume = () => {
       setIsLoading(true);
       
       // Fetch volume and mute status in parallel
-      const response = await api.toggleSystemMute();
-      if (isMounted.current && response.isMuted !== isMuted) {
-        setIsMuted(response.isMuted);
-      }
+      const [volumeResponse, muteResponse] = await Promise.all([
+        api.getSystemVolume(controller.signal),
+        api.toggleSystemMute(controller.signal)
+      ]);
+      
+      if (!isMounted.current) return;
+      
+      setVolume(volumeResponse.volume);
+      setIsMuted(muteResponse.isMuted);
+      
     } catch (err) {
       if (controller.signal.aborted) return;
       if (isMounted.current) {
         setError('Failed to fetch system volume');
-        console.error(err);
+        console.error('Error fetching system volume:', err);
       }
     } finally {
       if (volumeRequestController.current === controller) {

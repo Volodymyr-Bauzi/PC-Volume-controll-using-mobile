@@ -25,18 +25,18 @@ export default defineConfig(({ mode }: ConfigEnv): UserConfig => {
       proxy: {
         // Proxy API requests to the backend server in development
         '/api': {
-          target: `http://${env.VITE_API_HOST || 'localhost'}:${env.VITE_API_PORT || '3001'}`,
+          target: `http://${env.VITE_API_HOST || 'localhost'}:${env.VITE_API_PORT || '8777'}`,
           changeOrigin: true,
           secure: false,
           rewrite: (path) => path.replace(/^\/api/, '')
         },
         // Proxy WebSocket connections
         '/ws': {
-          target: `ws://${env.VITE_API_HOST || 'localhost'}:${env.VITE_WS_PORT || env.VITE_API_PORT || '3001'}`,
+          target: `ws://${env.VITE_API_HOST || 'localhost'}:${env.VITE_WS_PORT || env.VITE_API_PORT || '8777'}`,
           ws: true,
           changeOrigin: true,
           secure: false,
-          rewrite: (path) => path.replace(/^\/ws/, '')
+          rewrite: (path) => path.replace(/^\/ws/, '') as string
         }
       }
     },

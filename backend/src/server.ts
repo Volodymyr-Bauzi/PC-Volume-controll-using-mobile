@@ -14,7 +14,7 @@ const IS_DEVELOPMENT = NODE_ENV === 'development';
 
 // Server configuration
 const HOST = process.env.BACKEND_HOST || '0.0.0.0';
-const PORT = parseInt(process.env.BACKEND_PORT || '3001', 10);
+const PORT = parseInt(process.env.BACKEND_PORT || '8777', 10);
 const CORS_ORIGIN = process.env.CORS_ORIGIN || (IS_DEVELOPMENT ? 'http://localhost:3000' : '');
 const LOG_LEVEL = process.env.LOG_LEVEL || (IS_DEVELOPMENT ? 'debug' : 'info');
 
@@ -128,7 +128,6 @@ app.use(bodyParser.json());
 
 // Serve static files from the frontend directory
 const frontendPath = path.join(__dirname, 'frontend');
-logger.info(`Serving frontend from: ${frontendPath}`);
 app.use(express.static(frontendPath));
 
 // Serve index.html for the root path
@@ -282,15 +281,12 @@ server.listen(PORT, HOST, () => {
   logger.info('========================================');
   logger.info('Server started successfully!');
   logger.info('========================================');
-  logger.info(`Local:            http://localhost:${PORT}`);
-  logger.info(`Network:          http://${localIP}:${PORT}`);
-  logger.info(`Environment:      ${NODE_ENV}`);
-  logger.info(`WebSocket:        ws://${localIP}:${PORT}/ws`);
-  logger.info(`CORS Origins:     ${CORS_ORIGIN}`);
+  logger.info(`Visit from mobile or other devices within local network:`)          
+  logger.info(`http://${localIP}:${PORT}`);
   logger.info('========================================');
   
   // Log all network interfaces for debugging
-  logger.debug('Available network interfaces:');
+  logger.debug('Available local network interfaces:');
   Object.entries(networkInterfaces).forEach(([name, iface]) => {
     if (Array.isArray(iface)) {
       iface.forEach((details: any) => {

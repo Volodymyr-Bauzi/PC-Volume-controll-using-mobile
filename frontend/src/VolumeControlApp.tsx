@@ -8,9 +8,13 @@ import { useSystemVolume } from './hooks/useSystemVolume';
 
 export function VolumeControlApp() {
   const [apiUrl] = useState<string>(() => {
-    // Use the current hostname and port from environment variables
-    const port = import.meta.env.VITE_API_PORT || 8001;
-    return `http://${window.location.hostname}:${port}`;
+    // In development, use the configured API URL or default to localhost with port 8777
+    if (import.meta.env.DEV) {
+      const port = import.meta.env.VITE_API_PORT || 8777;
+      return `http://${window.location.hostname}:${port}`;
+    }
+    // In production, use relative URLs or the configured production URL
+    return import.meta.env.VITE_API_URL || '';
   });
 
   const {

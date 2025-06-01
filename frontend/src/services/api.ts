@@ -2,30 +2,29 @@ import axios from 'axios';
 import type { CancelTokenSource } from 'axios';
 
 // Get configuration from environment variables
-const API_PORT = import.meta.env.VITE_API_PORT || 3001;
-const PROTOCOL = window.location.protocol;
-const HOST = window.location.hostname;
 const IS_DEVELOPMENT = import.meta.env.DEV;
 
 // Function to get the API base URL
 const getApiBaseUrl = () => {
   if (IS_DEVELOPMENT) {
     // In development, use the Vite dev server proxy or direct to backend
-    return `${PROTOCOL}//${HOST}:${API_PORT}`;
+    const port = import.meta.env.VITE_API_PORT || 8777;
+    return `http://${window.location.hostname}:${port}`;
   }
-  // In production, use the same origin or configured production URL
-  const productionApiUrl = import.meta.env.VITE_API_URL || window.location.origin;
-  return productionApiUrl;
+  // In production, use relative URLs or the configured production URL
+  return import.meta.env.VITE_API_URL || '';
 };
 
 // Function to get WebSocket URL
 const getWebSocketUrl = () => {
   if (IS_DEVELOPMENT) {
-    return `ws://${HOST}:${API_PORT}`;
+    const port = import.meta.env.VITE_WS_PORT || import.meta.env.VITE_API_PORT || 8777;
+    return `ws://${window.location.hostname}:${port}`;
   }
-  // In production, use wss:// for secure WebSocket
+  // In production, use relative WebSocket URL or construct from current host
   const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-  return `${wsProtocol}//${window.location.host}`;
+  const wsPath = import.meta.env.VITE_WS_URL || 'ws';
+  return wsPath.startsWith('ws') ? wsPath : `${wsProtocol}//${window.location.host}${wsPath}`;
 };
 
 const API_BASE_URL = getApiBaseUrl();
