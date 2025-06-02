@@ -90,6 +90,8 @@ jobs:
         if: matrix.os == 'windows-latest'
         run: |
           $version = (Get-Content package.json | ConvertFrom-Json).version
+          $url = "https://github.com/${{ github.repository }}/releases/download/v$version/volume-control-windows-v$version.zip"
+          echo "🔗 Windows release download URL: $url"
           $windowsZip = Get-ChildItem -Path release -Filter "volume-control-windows-*.zip" | Select-Object -First 1
           if ($windowsZip) {
             $newName = "volume-control-windows-v$version.zip"
