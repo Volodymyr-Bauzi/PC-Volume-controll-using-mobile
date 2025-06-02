@@ -1,7 +1,21 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
-
 import { type Application } from '../services/api';
 import api from '../services/api';
+
+// Store previous volume levels when muting
+const usePreviousVolume = () => {
+  const prevVolumesRef = useRef<Record<string, number>>({});
+  
+  const saveVolume = useCallback((appName: string, volume: number) => {
+    prevVolumesRef.current[appName] = volume;
+  }, []);
+  
+  const getVolume = useCallback((appName: string) => {
+    return prevVolumesRef.current[appName] ?? 50; // Default to 50 if no previous volume
+  }, []);
+  
+  return { saveVolume, getVolume };
+};
 
 export const useVolumeControl = (initialApplications: Application[] = []) => {
   const [applications, setApplications] = useState<Application[]>(initialApplications);
@@ -9,6 +23,17 @@ export const useVolumeControl = (initialApplications: Application[] = []) => {
   const [error, setError] = useState<string | null>(null);
   const volumeRequestControllers = useRef<Record<string, AbortController>>({});
   const updateTimeoutRef = useRef<Record<string, NodeJS.Timeout>>({});
+  const { saveVolume, getVolume } = usePreviousVolume();
+  
+  // Clean up on unmount
+  useEffect(() => {
+    return () => {
+      // Clear all timeouts
+      Object.values(updateTimeoutRef.current).forEach(timeout => clearTimeout(timeout as any));
+      // Abort all pending requests
+      Object.values(volumeRequestControllers.current).forEach(controller => controller.abort());
+    };
+  }, []);
 
   // Fetch applications from the API
   const fetchApplications = useCallback(async () => {
@@ -29,8 +54,32 @@ export const useVolumeControl = (initialApplications: Application[] = []) => {
       }
       return [];
     } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  // Update application volume on the server
+  const updateAppVolume = useCallback(async (appName: string, volume: number) => {
+    const controller = new AbortController();
+    volumeRequestControllers.current[appName] = controller;
+    
+    try {
+      await api.updateVolume(appName, volume, controller.signal);
+    } catch (err) {
       if (!controller.signal.aborted) {
-        setIsLoading(false);
+        console.error(`Error updating volume for ${appName}:`, err);
+        // Revert the UI if the API call fails
+        setApplications(prev => 
+          prev.map(app => 
+            app.name === appName 
+              ? { ...app, volume: app.volume } // Keep the old volume
+              : app
+          )
+        );
+      }
+    } finally {
+      if (volumeRequestControllers.current[appName] === controller) {
+        delete volumeRequestControllers.current[appName];
       }
     }
   }, []);
@@ -39,11 +88,19 @@ export const useVolumeControl = (initialApplications: Application[] = []) => {
   const handleVolumeChange = useCallback((appName: string, newVolume: number, isFinalUpdate = false) => {
     // Update local state immediately for responsive UI
     setApplications(prev => 
-      prev.map(app => 
-        app.name === appName 
-          ? { ...app, volume: newVolume } 
-          : app
-      )
+      prev.map(app => {
+        if (app.name !== appName) return app;
+        
+        // If volume is being set to 0, ensure isMuted is true
+        // If volume is being set above 0 and we were muted, unmute
+        const isMuted = newVolume === 0 ? true : app.isMuted ? false : app.isMuted;
+        
+        return { 
+          ...app, 
+          volume: newVolume,
+          isMuted
+        };
+      })
     );
 
     // Clear any pending update for this app
@@ -60,56 +117,18 @@ export const useVolumeControl = (initialApplications: Application[] = []) => {
         delete volumeRequestControllers.current[appName];
       }
       
-      // Create a new controller for this request
-      const controller = new AbortController();
-      volumeRequestControllers.current[appName] = controller;
-      
-      // Send the update immediately
-      api.updateVolume(appName, newVolume, controller.signal)
-        .catch(err => {
-          if (!controller.signal.aborted) {
-            const message = api.getErrorMessage(err);
-            setError(`Failed to update volume: ${message}`);
-            console.error('Error updating volume:', err);
-            fetchApplications();
-          }
-        })
-        .finally(() => {
-          if (volumeRequestControllers.current[appName] === controller) {
-            delete volumeRequestControllers.current[appName];
-          }
-        });
-    } else {
-      // For intermediate updates, debounce the server update
-      updateTimeoutRef.current[appName] = setTimeout(() => {
-        // Cancel any pending request for this app
-        if (volumeRequestControllers.current[appName]) {
-          volumeRequestControllers.current[appName].abort();
-        }
-        
-        // Create a new controller for this request
-        const controller = new AbortController();
-        volumeRequestControllers.current[appName] = controller;
-        
-        // Send the debounced update
-        api.updateVolume(appName, newVolume, controller.signal)
-          .catch(err => {
-            if (!controller.signal.aborted) {
-              console.error('Debounced volume update failed:', err);
-              // Don't show error or refetch for debounced updates
-            }
-          })
-          .finally(() => {
-            if (volumeRequestControllers.current[appName] === controller) {
-              delete volumeRequestControllers.current[appName];
-            }
-          });
-      }, 50); // 50ms debounce for smooth dragging
+      updateAppVolume(appName, newVolume);
+      return;
     }
-  }, [fetchApplications]);
+
+    // Otherwise, debounce the update to avoid too many API calls
+    updateTimeoutRef.current[appName] = setTimeout(() => {
+      updateAppVolume(appName, newVolume);
+    }, 150); // 150ms debounce delay
+  }, [updateAppVolume]);
 
   // Handle volume change end (send final update to server)
-  const handleVolumeChangeEnd = useCallback(async (appName: string, newVolume: number) => {
+  const handleVolumeChangeEnd = useCallback((appName: string, newVolume: number) => {
     // Clear any pending debounced updates
     if (updateTimeoutRef.current[appName]) {
       clearTimeout(updateTimeoutRef.current[appName]);
@@ -119,6 +138,30 @@ export const useVolumeControl = (initialApplications: Application[] = []) => {
     // Send the final update
     handleVolumeChange(appName, newVolume, true);
   }, [handleVolumeChange]);
+
+  // Toggle mute for an application
+  const toggleMute = useCallback(async (appName: string) => {
+    setApplications(prev => {
+      return prev.map(app => {
+        if (app.name !== appName) return app;
+        
+        const isMuted = !app.isMuted;
+        
+        if (isMuted) {
+          // When muting, save the current volume
+          saveVolume(appName, app.volume);
+          // Set volume to 0 when muting
+          handleVolumeChange(appName, 0, true);
+        } else {
+          // When unmuting, restore the previous volume
+          const prevVolume = getVolume(appName);
+          handleVolumeChange(appName, prevVolume, true);
+        }
+        
+        return { ...app, isMuted };
+      });
+    });
+  }, [handleVolumeChange, saveVolume, getVolume]);
 
   // Handle WebSocket updates
   const handleWebSocketVolumeChange = useCallback(({ appName, volume, action }: { appName: string; volume: number; action?: 'update' | 'add' | 'remove' }) => {
@@ -172,20 +215,16 @@ export const useVolumeControl = (initialApplications: Application[] = []) => {
     
     return () => {
       ws.close();
-      // Clean up any pending requests
-      Object.values(volumeRequestControllers.current).forEach(controller => {
-        controller.abort();
-      });
-      // Clear any pending timeouts
-      Object.values(updateTimeoutRef.current).forEach(timeout => {
-        clearTimeout(timeout);
-      });
     };
   }, [handleWebSocketVolumeChange]);
 
   // Initial fetch
   useEffect(() => {
-    fetchApplications();
+    const fetchData = async () => {
+      await fetchApplications();
+    };
+    
+    fetchData();
   }, [fetchApplications]);
 
   return {
@@ -195,6 +234,7 @@ export const useVolumeControl = (initialApplications: Application[] = []) => {
     handleVolumeChange,
     handleVolumeChangeEnd,
     handleWebSocketVolumeChange,
+    toggleMute,
     refresh: fetchApplications,
   };
 };

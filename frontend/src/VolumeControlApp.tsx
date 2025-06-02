@@ -24,6 +24,7 @@ export function VolumeControlApp() {
     handleVolumeChange,
     handleVolumeChangeEnd,
     handleWebSocketVolumeChange,
+    toggleMute,
   } = useVolumeControl([]);
 
   const {
@@ -51,10 +52,10 @@ export function VolumeControlApp() {
       header={{ height: 60 }}
       padding="md"
     >
-      <AppShell.Header>
+      <AppShell.Header style={{width: '250px', margin: '0 auto'}}>
         <Container size="xl" h="100%">
           <Group justify="space-between" align="center" h="100%">
-            <Title order={4}>Volume Control</Title>
+            <Title order={4} style={{ textAlign: 'center' }}>Volume Control</Title>
             <ThemeToggle />
           </Group>
         </Container>
@@ -80,9 +81,9 @@ export function VolumeControlApp() {
           </Box>
         ) : (
           <>
-          <div style={{ marginBottom: '2rem' }}>
+          <div style={{ marginBottom: '2rem', display: 'flex', flexWrap: 'wrap', gap: '1rem', justifyContent: 'center', alignItems: 'center', flexDirection: 'column'  }}>
             <Group justify="space-between" align="center" mb="sm">
-              <Text size="lg" fw={500}>System Volume</Text>
+              <Text style={{textAlign: 'center'}} size="lg" fw={500}>System Volume</Text>
               <Button 
                 variant="light" 
                 color={systemIsMuted ? 'red' : 'blue'} 
@@ -100,9 +101,10 @@ export function VolumeControlApp() {
               isMuted={systemIsMuted}
               onVolumeChange={setSystemVolume}
               onVolumeChangeEnd={setSystemVolume}
+              isSystem
             />
           </div>
-          <div style= {{ display: 'flex', flexWrap: 'wrap', gap: '1rem' }}>
+          <div style= {{ display: 'flex', flexWrap: 'wrap', gap: '1rem', justifyContent: 'center' }}>
             {applications.map((app) => (
               <ApplicationCard
                 key={app.name}
@@ -111,6 +113,8 @@ export function VolumeControlApp() {
                 isMuted={app.isMuted}
                 onVolumeChange={(volume) => handleVolumeChange(app.name, volume)}
                 onVolumeChangeEnd={(volume) => handleVolumeChangeEnd(app.name, volume)}
+                onToggleMute={() => toggleMute(app.name)}
+                orientation="vertical"
               />
             ))}
           </div>

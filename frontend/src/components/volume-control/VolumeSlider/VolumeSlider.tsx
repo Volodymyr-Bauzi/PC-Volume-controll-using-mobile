@@ -1,4 +1,5 @@
 import React, { useState, useCallback, memo } from 'react';
+import { useMantineTheme } from '@mantine/core';
 import styles from './VolumeSlider.module.css';
 
 type OrientationType = 'horizontal' | 'vertical';
@@ -42,6 +43,7 @@ const VolumeSliderComponent: React.FC<VolumeSliderProps> = ({
   ...props
 }) => {
   const [isSliderDragging, setIsSliderDragging] = useState(false);
+  const theme = useMantineTheme();
   const isVertical = orientation === 'vertical';
 
   const handleVolumeChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
@@ -65,7 +67,7 @@ const VolumeSliderComponent: React.FC<VolumeSliderProps> = ({
   const fillPercentageValue = ((value - min) / (max - min)) * 100;
   const sliderClasses = [
     styles.volumeSlider,
-    isVertical ? styles.vertical : styles.horizontal,
+    isVertical ? styles.vertical : '',
     disabled ? styles.disabled : '',
     className
   ].filter(Boolean).join(' ');
@@ -75,6 +77,9 @@ const VolumeSliderComponent: React.FC<VolumeSliderProps> = ({
     ...style
   } as React.CSSProperties;
 
+  // Get color scheme from theme or default to 'light'
+  const colorScheme = 'colorScheme' in theme ? theme.colorScheme : 'light';
+
   return (
     <div 
       className={sliderClasses}
@@ -82,9 +87,11 @@ const VolumeSliderComponent: React.FC<VolumeSliderProps> = ({
       onPointerLeave={handlePointerUp}
       style={sliderStyle}
       aria-disabled={disabled}
+      data-mantine-color-scheme={colorScheme}
     >
       <input
         type="range"
+        className={styles.sliderInput}
         min={min}
         max={max}
         step={step}
@@ -99,7 +106,6 @@ const VolumeSliderComponent: React.FC<VolumeSliderProps> = ({
             onChange?.(newValue);
           }
         }}
-        className={styles.sliderInput}
         aria-label={props['aria-label']}
         aria-orientation={orientation}
         aria-valuemin={min}

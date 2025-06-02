@@ -31,7 +31,7 @@ body {
 
 /* Light theme specific styles */
 [data-mantine-color-scheme='light'] {
-  background-color: var(--mantine-color-gray-0);
+  background-color: #ffffff
 }
 
 [data-mantine-color-scheme='light'] body,
@@ -41,26 +41,20 @@ body {
   color: var(--mantine-color-dark-9);
 }
 
-[data-mantine-color-scheme='light'] .mantine-AppShell-main {
-  background-color: var(--mantine-color-white);
-}
-
 /* Ensure menu is positioned correctly */
 .mantine-Menu-dropdown {
   position: fixed !important;
   z-index: 1000;
-  margin-top: 8px;
 }
 
-/* Ensure menu items are visible in both themes */
-.mantine-Menu-item {
-  color: inherit;
-}
 
+[data-mantine-color-scheme='dark'] .mantine-Menu-dropdown,
 [data-mantine-color-scheme='dark'] .mantine-Menu-item {
   color: var(--mantine-color-gray-0);
+  background-color: var(--mantine-color-red-8);
 }
 
 [data-mantine-color-scheme='light'] .mantine-Menu-item {
+  background-color: var(--mantine-color-white);
   color: var(--mantine-color-dark-9);
 }

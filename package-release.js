@@ -66,7 +66,7 @@ platforms.forEach(platform => {
   });
 
   // Create zip file
-  const zipFileName = `volume-control-${platform.name}-${version}.zip`;
+  const zipFileName = `volume-control-${platform.name}-v${version}.zip`;
   const zipFilePath = path.join(releaseDir, zipFileName);
   
   console.log(`  Creating ${zipFileName}...`);
@@ -89,7 +89,7 @@ platforms.forEach(platform => {
   }
   const artifactMapPath = path.join(releaseDir, 'artifacts.json');
   const artifactMap = platforms.reduce((acc, platform) => {
-    const zipFileName = `volume-control-${platform.name}-${version}.zip`;
+    const zipFileName = `volume-control-${platform.name}-v${version}.zip`;
     acc[platform.name] = path.join(releaseDir, zipFileName);
     return acc;
   }, {});

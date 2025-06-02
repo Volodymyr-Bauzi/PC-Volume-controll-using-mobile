@@ -1,6 +1,7 @@
 import { ActionIcon, Menu, Box, useMantineColorScheme } from '@mantine/core';
 import { IconSun, IconMoon, IconDeviceDesktop, IconCheck } from '@tabler/icons-react';
 import { useTheme } from '../../../contexts/ThemeContext';
+import { useState } from 'react';
 
 type ThemeValue = 'light' | 'dark' | 'system';
 
@@ -14,6 +15,7 @@ export const ThemeToggle = () => {
   const { theme, setTheme } = useTheme();
   const { colorScheme } = useMantineColorScheme();
   const isDark = colorScheme === 'dark';
+  const [isHovered, setIsHovered] = useState(false);
 
   const themes: readonly ThemeOption[] = [
     { value: 'light', label: 'Light', icon: <IconSun size={16} /> },
@@ -22,14 +24,14 @@ export const ThemeToggle = () => {
   ] as const;
 
   const currentTheme = themes.find((t) => t.value === theme) || themes[2];
-
+      
   return (
     <Menu 
       shadow="md" 
       width={140} 
-      position="bottom-end"
+      position="bottom-start"
       withArrow
-      transitionProps={{ transition: 'pop-top-right' }}
+      transitionProps={{ transition: 'pop-top-left' }}
       withinPortal={false}
       positionDependencies={[theme]}
     >
@@ -53,14 +55,18 @@ export const ThemeToggle = () => {
           <Menu.Item 
             key={item.value}
             onClick={() => setTheme(item.value)}
+            style={(theme) => ({
+              backgroundColor: isDark ? theme.colors.dark[6] : theme.colors.gray[1],
+            })}
           >
             <Box
               style={{
                 display: 'flex',
                 alignItems: 'center',
-                gap: '0.5rem',
+                justifyContent: 'center',
+                margin: '0.2rem',
                 color: isDark ? '#fff' : '#000',
-                backgroundColor: isDark ? '#222' : '#fff',
+                fontWeight: theme === item.value ? 'bold' : 'normal',
               }}
             >
               <span style={{ marginRight: '0.5rem' }}>{item.icon}</span>
@@ -68,7 +74,7 @@ export const ThemeToggle = () => {
               {theme === item.value && (
                 <IconCheck 
                   size={16} 
-                  style={{ marginLeft: 'auto' }} 
+                  style={{ marginLeft: 'auto', }} 
                 />
               )}
             </Box>

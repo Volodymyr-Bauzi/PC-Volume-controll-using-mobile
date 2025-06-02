@@ -1,3 +1,4 @@
+/* Base styles */
 .volumeSlider {
   /* Theme-aware background variables */
   --background: light-dark(var(--mantine-color-white), var(--mantine-color-dark-7));
@@ -27,7 +28,7 @@
   --thumb-active-scale: 0.9;
   --thumb-hover-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
   --focus-ring: 0 0 0 3px rgba(99, 102, 241, 0.5);
-  --glow: 0 0 15px rgba(255, 255, 255, 0.6);
+  --glow: 0 0 15px rgb(58, 58, 58);
   --track-shine: linear-gradient(
     to right,
     rgba(255, 255, 255, 0.1) 0%,
@@ -35,37 +36,49 @@
     rgba(255, 255, 255, 0.1) 100%
   );
 
-  /* Apply background styles */
-  background-color: var(--background);
-  color: var(--text-color);
-
+  /* Apply base styles */
   display: flex;
   align-items: center;
-  padding: 16px 0;
+  padding: 1rem 0;
   position: relative;
   width: 100%;
   transition: all var(--transition-speed) ease;
+  background-color: var(--background);
+  color: var(--text-color);
 }
 
+/* Vertical orientation */
 .volumeSlider.vertical {
   height: 100%;
   min-height: 140px;
   justify-content: center;
-  padding: 0 16px;
+  padding: 0 1rem;
 }
 
+/* Disabled state */
+.volumeSlider.disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.volumeSlider.disabled .sliderInput {
+  cursor: not-allowed;
+}
+
+/* Slider Input */
 .sliderInput {
   -webkit-appearance: none;
   appearance: none;
   background: transparent;
   outline: none;
-  margin: 0;
+  margin: 0 auto;
   width: 100%;
   height: var(--thumb-size);
   cursor: pointer;
   transition: all var(--transition-speed) ease;
   position: relative;
   z-index: 1;
+  padding: 0.5rem 0;
 }
 
 /* Webkit Track */
@@ -129,7 +142,7 @@
   transform-origin: center;
 }
 
-/* Webkit Fill Track */
+/* Fill Track */
 .sliderInput::-webkit-slider-runnable-track::before {
   content: '';
   position: absolute;
@@ -148,6 +161,52 @@
   animation: gradientShift 8s ease infinite;
 }
 
+.sliderInput::-moz-range-progress {
+  height: 100%;
+  background: var(--track-fill);
+  border-radius: var(--track-radius);
+  transition: width 0.1s ease;
+}
+
+/* Hover & Focus States */
+.volumeSlider:not(.disabled):hover {
+  --thumb-shadow: var(--thumb-hover-shadow);
+}
+
+.sliderInput:not(:disabled):hover::-webkit-slider-thumb,
+.sliderInput:focus-visible::-webkit-slider-thumb {
+  transform: scale(var(--thumb-hover-scale));
+  box-shadow: var(--thumb-hover-shadow), var(--glow);
+}
+
+.sliderInput:not(:disabled):active::-webkit-slider-thumb {
+  transform: scale(var(--thumb-active-scale));
+}
+
+.sliderInput:not(:disabled):hover::-moz-range-thumb,
+.sliderInput:focus-visible::-moz-range-thumb {
+  transform: scale(var(--thumb-hover-scale));
+  box-shadow: var(--thumb-hover-shadow), var(--glow);
+}
+
+.sliderInput:not(:disabled):active::-moz-range-thumb {
+  transform: scale(var(--thumb-active-scale));
+}
+
+/* Focus Styles */
+.sliderInput:focus-visible {
+  outline: none;
+}
+
+.sliderInput:focus-visible::-webkit-slider-thumb {
+  box-shadow: var(--focus-ring), var(--thumb-hover-shadow), var(--glow);
+}
+
+.sliderInput:focus-visible::-moz-range-thumb {
+  box-shadow: var(--focus-ring), var(--thumb-hover-shadow), var(--glow);
+}
+
+/* Animations */
 @keyframes gradientShift {
   0% { background-position: 0% 50%; }
   50% { background-position: 100% 50%; }
@@ -159,85 +218,6 @@
   100% { background-position: -200% 0; }
 }
 
-/* Firefox Fill Track */
-.sliderInput::-moz-range-progress {
-  height: 100%;
-  background: var(--track-fill);
-  border-radius: var(--track-radius);
-  transition: width 0.1s ease;
-}
-
-/* Hover States */
-.volumeSlider:not(.disabled):hover {
-  --thumb-shadow: var(--thumb-hover-shadow);
-}
-
-.sliderInput:not(:disabled):hover::-webkit-slider-thumb {
-  transform: scale(var(--thumb-hover-scale));
-  box-shadow: var(--thumb-hover-shadow);
-}
-
-.sliderInput:not(:disabled):active::-webkit-slider-thumb {
-  transform: scale(var(--thumb-active-scale));
-}
-
-.sliderInput:not(:disabled):hover::-moz-range-thumb {
-  transform: scale(var(--thumb-hover-scale));
-  box-shadow: var(--thumb-hover-shadow);
-}
-
-.sliderInput:not(:disabled):active::-moz-range-thumb {
-  transform: scale(var(--thumb-active-scale));
-}
-
-/* Disabled State */
-.volumeSlider.disabled .sliderInput {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.volumeSlider.disabled .sliderInput::-webkit-slider-thumb {
-  transform: scale(1);
-  box-shadow: var(--thumb-shadow);
-}
-
-.volumeSlider.disabled .sliderInput::-moz-range-thumb {
-  transform: scale(1);
-  box-shadow: var(--thumb-shadow);
-}
-
-/* Vertical Slider */
-.volumeSlider.vertical .sliderInput {
-  transform: rotate(-90deg);
-  width: 120px;
-  margin: 40px 0;
-}
-
-/* Focus Styles */
-.sliderInput:focus-visible {
-  outline: none;
-}
-
-.sliderInput:focus-visible::-webkit-slider-thumb {
-  box-shadow: var(--focus-ring), var(--thumb-hover-shadow);
-  transform: scale(var(--thumb-hover-scale));
-}
-
-.sliderInput:focus-visible::-moz-range-thumb {
-  box-shadow: var(--focus-ring), var(--thumb-hover-shadow);
-  transform: scale(var(--thumb-hover-scale));
-}
-
-/* Smooth transitions for all interactive states */
-.sliderInput,
-.sliderInput::-webkit-slider-thumb,
-.sliderInput::-moz-range-thumb,
-.sliderInput::-webkit-slider-runnable-track,
-.sliderInput::-moz-range-track {
-  transition: all var(--transition-speed) ease;
-}
-
-/* Animation for value changes */
 @keyframes pulse {
   0% { transform: scale(1); }
   50% { transform: scale(1.1); }
@@ -257,7 +237,10 @@
   --background: var(--mantine-color-dark-8);
   --card-bg: var(--mantine-color-dark-7);
   --text-color: var(--mantine-color-gray-0);
-
+  --track-bg: var(--mantine-color-dark-6);
+  --thumb-bg: var(--mantine-color-dark-1);
+  --thumb-border: 1px solid var(--mantine-color-gray-7);
+  --thumb-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
   --track-fill: linear-gradient(
     90deg,
     var(--mantine-color-pink-6),
@@ -267,9 +250,27 @@
     var(--mantine-color-cyan-6),
     var(--mantine-color-violet-6)
   );
-  --thumb-bg: var(--mantine-color-dark-1);
-  --thumb-border: 1px solid var(--mantine-color-gray-7);
-  --thumb-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+}
+
+/* Light mode specific */
+[data-mantine-color-scheme="light"] .volumeSlider {
+  --thumb-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+/* Transitions */
+.sliderInput,
+.sliderInput::-webkit-slider-thumb,
+.sliderInput::-moz-range-thumb,
+.sliderInput::-webkit-slider-runnable-track,
+.sliderInput::-moz-range-track {
+  transition: all var(--transition-speed) ease;
+}
+
+/* Vertical Slider */
+.volumeSlider.vertical .sliderInput {
+  transform: rotate(-90deg);
+  width: 120px;
+  margin: 40px 0;
 }
 
 .volumeSliderCard {

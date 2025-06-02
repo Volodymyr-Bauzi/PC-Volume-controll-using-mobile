@@ -1,16 +1,61 @@
 .card {
-  height: auto;
-  min-width: 200px;
+  height: 100%;
   flex: 1;
   display: flex;
   flex-direction: column;
-  align-items: stretch;
+  align-items: center;
+  justify-content: center;
   transition: transform 150ms ease, box-shadow 150ms ease;
+  position: relative;
+  overflow: visible;
+  padding: 1rem;
 }
 
-.card:hover {
-  transform: translateY(-2px);
-  box-shadow: var(--mantine-shadow-md);
+.systemCard {
+  width: 100%;
+  max-width: 500px;
+  margin: 0 auto 2rem;
+  min-height: auto;
+  padding: 1.5rem;
+}
+
+.appCard {
+  min-width: 140px;
+  max-width: 200px;
+  height: 100%;
+}
+
+.sliderContainer {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem 0;
+}
+
+.systemSlider {
+  width: 20vw;
+}
+
+.appSlider {
+  min-height: 140px;
+  max-height: 200px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.volumeText {
+  min-height: var(--mantine-spacing-md);
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin-top: 1rem;
+  text-align: center;
+  width: 100%;
+  color: var(--mantine-color-dimmed);
+}
+
+.volumeText.muted {
+  color: var(--mantine-color-red-6);
 }
 
 .appName {
@@ -18,25 +63,11 @@
   overflow: hidden;
   text-overflow: ellipsis;
   width: 100%;
-  margin-bottom: var(--mantine-spacing-sm);
-}
-
-.sliderContainer {
-  width: 100%;
-  padding: var(--mantine-spacing-sm) 0;
-  display: flex;
-  align-items: center;
-  min-height: 60px; /* Ensure consistent height for alignment */
-}
-
-.volumeText {
-  min-height: var(--mantine-spacing-md);
+  font-size: 1rem;
+  line-height: 1.2;
+  margin-bottom: 0.5rem;
   text-align: center;
-  width: 100%;
-}
-
-.volumeText.muted {
-  color: var(--mantine-color-red-6);
+  font-weight: 500;
 }
 
 .volumeText.dimmed {
