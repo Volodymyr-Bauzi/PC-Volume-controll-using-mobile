@@ -1,7 +1,6 @@
 import { ActionIcon, Menu, Box, useMantineColorScheme } from '@mantine/core';
 import { IconSun, IconMoon, IconDeviceDesktop, IconCheck } from '@tabler/icons-react';
 import { useTheme } from '../../../contexts/ThemeContext';
-import { useState } from 'react';
 
 type ThemeValue = 'light' | 'dark' | 'system';
 
@@ -15,7 +14,6 @@ export const ThemeToggle = () => {
   const { theme, setTheme } = useTheme();
   const { colorScheme } = useMantineColorScheme();
   const isDark = colorScheme === 'dark';
-  const [isHovered, setIsHovered] = useState(false);
 
   const themes: readonly ThemeOption[] = [
     { value: 'light', label: 'Light', icon: <IconSun size={16} /> },
