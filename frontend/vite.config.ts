@@ -59,6 +59,11 @@ export default defineConfig(({ mode }: ConfigEnv): UserConfig => {
           assetFileNames: 'assets/[name]-[hash][extname]',
           chunkFileNames: 'assets/[name]-[hash].js',
           entryFileNames: 'assets/[name]-[hash].js',
+          manualChunks: {
+            vendor: ['react', 'react-dom'],
+            mantine: ['@mantine/core', '@mantine/hooks', '@mantine/notifications'],
+            utils: ['axios'],
+          },
         },
       },
     },

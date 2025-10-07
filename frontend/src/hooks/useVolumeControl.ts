@@ -23,6 +23,7 @@ export const useVolumeControl = (initialApplications: Application[] = []) => {
   const [error, setError] = useState<string | null>(null);
   const volumeRequestControllers = useRef<Record<string, AbortController>>({});
   const updateTimeoutRef = useRef<Record<string, NodeJS.Timeout>>({});
+  const lastRequestedVolumeRef = useRef<Record<string, number>>({});
   const { saveVolume, getVolume } = usePreviousVolume();
   
   // Clean up on unmount
@@ -62,6 +63,7 @@ export const useVolumeControl = (initialApplications: Application[] = []) => {
   const updateAppVolume = useCallback(async (appName: string, volume: number) => {
     const controller = new AbortController();
     volumeRequestControllers.current[appName] = controller;
+    lastRequestedVolumeRef.current[appName] = volume;
     
     try {
       await api.updateVolume(appName, volume, controller.signal);
@@ -86,6 +88,8 @@ export const useVolumeControl = (initialApplications: Application[] = []) => {
 
   // Handle volume change with debounced server updates
   const handleVolumeChange = useCallback((appName: string, newVolume: number, isFinalUpdate = false) => {
+    // Track the latest user-intended volume for conflict resolution with WS
+    lastRequestedVolumeRef.current[appName] = newVolume;
     // Update local state immediately for responsive UI
     setApplications(prev => 
       prev.map(app => {
@@ -165,6 +169,16 @@ export const useVolumeControl = (initialApplications: Application[] = []) => {
 
   // Handle WebSocket updates
   const handleWebSocketVolumeChange = useCallback(({ appName, volume, action }: { appName: string; volume: number; action?: 'update' | 'add' | 'remove' }) => {
+    // Ignore WS updates that conflict with a pending local change
+    const hasPendingDebounce = Boolean(updateTimeoutRef.current[appName]);
+    const hasInFlightRequest = Boolean(volumeRequestControllers.current[appName]);
+    const hasPendingLocalChange = hasPendingDebounce || hasInFlightRequest;
+    const lastRequested = lastRequestedVolumeRef.current[appName];
+
+    if (action === 'update' && hasPendingLocalChange && typeof lastRequested === 'number' && lastRequested !== volume) {
+      return; // drop stale WS update while user is actively changing volume
+    }
+
     setApplications(prev => {
       switch (action) {
         case 'add':
@@ -186,37 +200,7 @@ export const useVolumeControl = (initialApplications: Application[] = []) => {
     });
   }, []);
 
-  // Set up WebSocket connection
-  useEffect(() => {
-    const ws = new WebSocket(`ws://${window.location.hostname}:3001/ws`);
-    
-    ws.onopen = () => {
-      console.log('WebSocket connected');
-    };
-    
-    ws.onmessage = (event) => {
-      try {
-        const data = JSON.parse(event.data);
-        if (data.type === 'volumeUpdate') {
-          handleWebSocketVolumeChange(data);
-        }
-      } catch (err) {
-        console.error('Error processing WebSocket message:', err);
-      }
-    };
-    
-    ws.onerror = (error) => {
-      console.error('WebSocket error:', error);
-    };
-    
-    ws.onclose = () => {
-      console.log('WebSocket disconnected');
-    };
-    
-    return () => {
-      ws.close();
-    };
-  }, [handleWebSocketVolumeChange]);
+  // WebSocket connection handled by useWebSocket hook; legacy WS removed
 
   // Initial fetch
   useEffect(() => {

@@ -102,6 +102,16 @@ export class LinuxAudioControl implements IAudioControl {
     }
   }
 
+  // Read system mute state
+  public isMasterMuted(): boolean {
+    try {
+      return this.addon.isMasterMuted();
+    } catch (error) {
+      console.error('Error reading Linux master mute state:', error);
+      return false;
+    }
+  }
+
   public getApplications(): AudioApplication[] {
     try {
       const sinks = this.addon.getAudioSinks();
@@ -141,7 +151,8 @@ export class LinuxAudioControl implements IAudioControl {
 
       if (!pid) return false;
 
-      this.addon.setVolume(pid, volume);
+      const clamped = Math.max(0, Math.min(100, volume));
+      this.addon.setVolume(pid, clamped);
       return true;
     } catch (error) {
       console.error('Error setting Linux volume:', error);

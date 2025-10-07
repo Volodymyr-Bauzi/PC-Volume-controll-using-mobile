@@ -81,6 +81,19 @@ const api = {
     }
   },
 
+  // Get system mute status (no toggle)
+  async getSystemMute(signal?: AbortSignal): Promise<{ isMuted: boolean }> {
+    try {
+      const response = await axios.get(`${API_BASE_URL}/api/system/mute`, {
+        signal,
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching mute status:', error);
+      throw error;
+    }
+  },
+
   // Fetch all applications
   async getApplications(signal?: AbortSignal): Promise<Application[]> {
     try {

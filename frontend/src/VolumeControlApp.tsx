@@ -13,6 +13,7 @@ import {useVolumeControl} from './hooks/useVolumeControl';
 import {useWebSocket} from './hooks/useWebSocket';
 import {ThemeToggle} from './components/common/ThemeToggle/ThemeToggle';
 import {useSystemVolume} from './hooks/useSystemVolume';
+import styles from './VolumeControlApp.module.css';
 
 const HORIZONTAL = 'horizontal';
 // const VERTICAL = 'vertical';
@@ -59,8 +60,8 @@ export function VolumeControlApp() {
 
   return (
     <AppShell header={{height: 60}} padding="md">
-      <AppShell.Header style={{width: '250px', margin: '0 auto'}}>
-        <Container size="xl" h="100%">
+      <AppShell.Header>
+        <Container size="xl" h="100%" className={styles.headerContainer}>
           <Group justify="space-between" align="center" h="100%">
             <Title order={4} style={{textAlign: 'center'}}>
               Volume Control
@@ -69,16 +70,16 @@ export function VolumeControlApp() {
           </Group>
         </Container>
       </AppShell.Header>
-      <AppShell.Main>
-        <Container size="xl" py="md">
+      <AppShell.Main className={styles.noScrollOnTouch}>
+        <Container size="xl" py="md" className={styles.mainContainer}>
           {isLoading ? (
-            <Box py="xl" style={{textAlign: 'center'}}>
+            <Box className={styles.loadingBox}>
               <Text c="dimmed" inherit>
                 Loading applications...
               </Text>
             </Box>
           ) : error ? (
-            <Box py="xl" style={{textAlign: 'center'}}>
+            <Box className={styles.errorBox}>
               <Text c="red" mb="md" fw={500} inherit>
                 {error}
               </Text>
@@ -93,18 +94,8 @@ export function VolumeControlApp() {
             </Box>
           ) : (
             <>
-              <div
-                style={{
-                  marginBottom: '2rem',
-                  display: 'flex',
-                  flexWrap: 'wrap',
-                  gap: '1rem',
-                  justifyContent: 'center',
-                  alignItems: 'center',
-                  flexDirection: 'column',
-                }}
-              >
-                <Group justify="space-between" align="center" mb="sm">
+              <div className={styles.systemSection}>
+                <Group justify="space-between" align="center" mb="sm" w="100%">
                   <Text style={{textAlign: 'center'}} size="lg" fw={500}>
                     System Volume
                   </Text>
@@ -132,14 +123,7 @@ export function VolumeControlApp() {
                   isSystem
                 />
               </div>
-              <div
-                style={{
-                  display: 'flex',
-                  flexWrap: 'wrap',
-                  gap: '1rem',
-                  justifyContent: 'center',
-                }}
-              >
+              <div className={styles.appsGrid}>
                 {applications.map((app) => (
                   <ApplicationCard
                     key={app.name}

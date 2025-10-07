@@ -8,5 +8,6 @@ export interface IAudioControl {
 
   getMasterVolume(): number;
   setMasterVolume(volume: number): void;
+  isMasterMuted(): boolean;
   toggleMasterMute(): boolean;
 }

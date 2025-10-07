@@ -136,6 +136,16 @@ export class WindowsAudioControl implements IAudioControl {
     }
   }
 
+  // Read system mute state
+  public isMasterMuted(): boolean {
+    try {
+      return this.addon.isMasterMuted();
+    } catch (error) {
+      console.error('Error reading master mute state:', error);
+      return false;
+    }
+  }
+
   public getVolume(identifier: string | number): number | null {
     try {
       const pid = typeof identifier === 'string' 
@@ -159,7 +169,8 @@ export class WindowsAudioControl implements IAudioControl {
       if (!pid) return false;
 
       // Convert from 0-100 to 0-1 scale
-      const normalizedVolume = volume / 100;
+      const clamped = Math.max(0, Math.min(100, volume));
+      const normalizedVolume = clamped / 100;
       this.addon.setAudioSessionVolumeLevelScalar(pid, normalizedVolume);
       return true;
     } catch (error) {

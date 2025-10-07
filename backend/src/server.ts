@@ -59,11 +59,12 @@ const corsOptions: CorsOptions = {
     if (NODE_ENV === 'development') {
       return callback(null, true);
     }
-    // In production, you might want to restrict this to specific origins
-    if (origin && CORS_ORIGIN === '*') {
+    // Allow requests without origin (curl, mobile apps, same-origin non-browser)
+    if (!origin) {
       return callback(null, true);
     }
-    if (origin && CORS_ORIGIN.split(',').includes(origin)) {
+    // In production, restrict to configured origins
+    if (CORS_ORIGIN === '*' || CORS_ORIGIN.split(',').includes(origin)) {
       return callback(null, true);
     }
     return callback(new Error('Not allowed by CORS'));
@@ -104,6 +105,7 @@ const server = http.createServer(app);
 // Configure WebSocket server with client tracking
 const wss = new WebSocket.Server({
   server,
+  path: '/ws',
   clientTracking: true,
   // Disable the per-message deflate to reduce memory usage
   perMessageDeflate: {
@@ -205,6 +207,12 @@ app.post('/api/volume', (req, res) => {
     if (typeof app_name === 'undefined' || typeof volume === 'undefined') {
       return res.status(400).json({ error: 'app_name and volume are required' });
     }
+    if (typeof volume !== 'number' || Number.isNaN(volume)) {
+      return res.status(400).json({ error: 'volume must be a number' });
+    }
+    if (volume < 0 || volume > 100) {
+      return res.status(400).json({ error: 'volume must be between 0 and 100' });
+    }
     
     // Get current apps to check if volume is actually changing
     const currentApps = AudioManager.getApplications() || [];
@@ -276,6 +284,17 @@ app.post('/api/system/mute/toggle', (req, res) => {
   }
 });
 
+// Get mute status (no toggle)
+app.get('/api/system/mute', (req, res) => {
+  try {
+    const isMuted = AudioManager.isMuted();
+    res.json({ isMuted });
+  } catch (error) {
+    console.error('Error getting mute status:', error);
+    res.status(500).json({ error: 'Failed to get mute status' });
+  }
+});
+
 // Start the server
 server.listen(PORT, HOST, () => {
   logger.info('========================================');
@@ -287,14 +306,14 @@ server.listen(PORT, HOST, () => {
   
   // Log all network interfaces for debugging
   logger.debug('Available local network interfaces:');
-  Object.entries(networkInterfaces).forEach(([name, iface]) => {
-    if (Array.isArray(iface)) {
-      iface.forEach((details: any) => {
-        if (details.family === 'IPv4' && !details.internal) {
-          logger.debug(`- ${name}: ${details.address} (${details.netmask})`);
-        }
-      });
-    }
+  const nets = networkInterfaces();
+  Object.keys(nets).forEach((name) => {
+    const iface = nets[name] || [];
+    iface.forEach((details: any) => {
+      if (details.family === 'IPv4' && !details.internal) {
+        logger.debug(`- ${name}: ${details.address} (${details.netmask})`);
+      }
+    });
   });
   
   // Log available audio applications on startup
@@ -313,24 +332,7 @@ server.listen(PORT, HOST, () => {
 let previousApps: any[] = [];
 
 // Helper function to check if two application arrays are different
-function appsChanged(prev: any[], current: any[]): boolean {
-  // If lengths are different, there's definitely a change
-  if (prev.length !== current.length) return true;
-  
-  // Check if any app was added, removed, or had its volume changed
-  const currentMap = new Map(current.map(app => [app.pid, app]));
-  
-  for (const prevApp of prev) {
-    const currentApp = currentMap.get(prevApp.pid);
-    if (!currentApp || 
-        currentApp.volume !== prevApp.volume || 
-        currentApp.isMuted !== prevApp.isMuted) {
-      return true;
-    }
-  }
-  
-  return false;
-}
+// removed unused appsChanged helper
 
 // Periodically check for application changes and broadcast updates only when needed
 setInterval(() => {

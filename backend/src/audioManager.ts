@@ -1,16 +1,14 @@
 import { AudioApplication } from './types';
 import { AudioControlFactory } from './platforms/audio-control-factory';
 import { IAudioControl } from './platforms/audio-control.interface';
-import { WindowsAudioControl } from './platforms/windows-audio-control';
-
-const audioControl = AudioControlFactory.createAudioControl();
+const audioControl: IAudioControl = AudioControlFactory.createAudioControl();
 
 export class AudioManager {
   private static instance: AudioManager;
   private audioControl: IAudioControl;
 
   private constructor() {
-    this.audioControl = new WindowsAudioControl();
+    this.audioControl = audioControl;
   }
 
   static getInstance(): AudioManager {
@@ -37,7 +35,7 @@ export class AudioManager {
    * @returns True if muted, false otherwise
    */
   static isMuted(): boolean {
-    return this.getInstance().audioControl.toggleMasterMute();
+    return this.getInstance().audioControl.isMasterMuted();
   }
 
   /**

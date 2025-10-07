@@ -1,0 +1,87 @@
+.headerContainer {
+  width: 100%;
+  max-width: 700px;
+  margin: 0 auto;
+}
+
+.mainContainer {
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.loadingBox,
+.errorBox {
+  text-align: center;
+  padding: 2rem 0;
+}
+
+.systemSection {
+  margin-bottom: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  align-items: center;
+}
+
+.appsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1rem;
+  align-items: stretch;
+}
+
+/* Mobile optimizations */
+@media (max-width: 768px) {
+  .headerContainer {
+    max-width: 100%;
+    padding: 0 0.75rem;
+  }
+
+  .mainContainer {
+  }
+
+  .systemSection {
+    margin-bottom: 1rem;
+    gap: 0.5rem;
+  }
+
+  .appsGrid {
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+  }
+}
+
+/* Prevent page scroll/jump during slider interaction */
+.noScrollOnTouch {
+  overscroll-behavior: contain;
+  touch-action: manipulation;
+}
+
+/* Theming tokens for dark/light using Mantine data attribute */
+[data-mantine-color-scheme='dark'] .appsGrid {
+  --card-bg: rgba(17, 20, 24, 0.85);
+  --card-border: rgba(255, 255, 255, 0.06);
+  --btn-bg: rgba(255, 255, 255, 0.05);
+  --btn-border: rgba(255, 255, 255, 0.06);
+  --track-fill: var(--mantine-color-blue-5);
+  --track-bg: rgba(255, 255, 255, 0.08);
+  --thumb-bg: #0f172a; /* slate-900 */
+  --thumb-border: var(--mantine-color-blue-4);
+  --focus-ring: rgba(51, 154, 240, 0.25);
+  --text-strong: rgba(255, 255, 255, 0.92);
+  --text-dim: rgba(255, 255, 255, 0.68);
+}
+
+[data-mantine-color-scheme='light'] .appsGrid {
+  --card-bg: rgba(255, 255, 255, 0.85);
+  --card-border: rgba(0, 0, 0, 0.06);
+  --btn-bg: rgba(0, 0, 0, 0.04);
+  --btn-border: rgba(0, 0, 0, 0.06);
+  --track-fill: var(--mantine-color-blue-6);
+  --track-bg: rgba(0, 0, 0, 0.1);
+  --thumb-bg: #ffffff;
+  --thumb-border: var(--mantine-color-blue-6);
+  --focus-ring: rgba(51, 154, 240, 0.25);
+  --text-strong: rgba(17, 17, 17, 0.92);
+  --text-dim: rgba(17, 17, 17, 0.68);
+}

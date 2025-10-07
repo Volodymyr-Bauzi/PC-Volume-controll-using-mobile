@@ -1,0 +1,100 @@
+.volumeSlider {
+  width: 100%;
+  position: relative;
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: pan-y;
+}
+
+.vertical {
+  height: 200px;
+  width: 56px;
+}
+
+.disabled {
+  opacity: 0.5;
+}
+
+.sliderInput {
+  /* -webkit-appearance: none; */
+  /* appearance: none; */
+  width: 100%;
+  height: 32px;
+  background: transparent;
+  margin: 0;
+}
+
+.sliderInput::-webkit-slider-container {
+  background-color: rgb(49, 49, 49);
+  border-radius: 12px;
+}
+
+/* Track */
+.sliderInput::-webkit-slider-runnable-track {
+  height: 12px;
+  background: grey;
+  border-radius: 999px;
+}
+.sliderInput::-moz-range-track {
+  height: 12px;
+  background: linear-gradient(
+    90deg,
+    var(--track-fill, var(--mantine-color-blue-6)) var(--fill-percentage),
+    var(--track-bg, rgba(255, 255, 255, 0.14)) var(--fill-percentage)
+  );
+  border-radius: 999px;
+}
+
+/* Thumb */
+.sliderInput::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  margin-top: -6px;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: red;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+.sliderInput::-moz-range-thumb {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--thumb-bg, #1f2937);
+  border: 3px solid var(--thumb-border, var(--mantine-color-blue-6));
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+/* Focus ring */
+.sliderInput:focus-visible {
+  outline: none;
+}
+.sliderInput:focus-visible::-webkit-slider-thumb {
+  box-shadow: 0 0 0 6px var(--focus-ring, rgba(51, 154, 240, 0.25)),
+    0 2px 8px rgba(0, 0, 0, 0.3);
+}
+.sliderInput:focus-visible::-moz-range-thumb {
+  box-shadow: 0 0 0 6px var(--focus-ring, rgba(51, 154, 240, 0.25)),
+    0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+@media (max-width: 768px) {
+  .vertical {
+    height: 200px;
+    width: 60px;
+  }
+  .sliderInput {
+    height: 40px;
+  }
+  .sliderInput::-webkit-slider-thumb {
+    width: 28px;
+    height: 28px;
+    margin-top: -2px;
+    background-color: red;
+    color: red;
+  }
+  .sliderInput::-moz-range-thumb {
+    width: 28px;
+    height: 28px;
+  }
+}

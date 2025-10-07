@@ -20,10 +20,10 @@ export const useSystemVolume = () => {
     try {
       setIsLoading(true);
 
-      // Fetch volume and mute status in parallel
+      // Fetch volume and mute status in parallel (do not toggle)
       const [volumeResponse, muteResponse] = await Promise.all([
         api.getSystemVolume(controller.signal),
-        api.toggleSystemMute(controller.signal),
+        api.getSystemMute(controller.signal),
       ]);
 
       if (!isMounted.current) return;

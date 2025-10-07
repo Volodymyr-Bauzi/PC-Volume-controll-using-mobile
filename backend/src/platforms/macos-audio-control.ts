@@ -102,6 +102,16 @@ export class MacOSAudioControl implements IAudioControl {
     }
   }
 
+  // Read system mute state
+  public isMasterMuted(): boolean {
+    try {
+      return this.addon.isMasterMuted();
+    } catch (error) {
+      console.error('Error reading macOS master mute state:', error);
+      return false;
+    }
+  }
+
   private findPidByName(name: string): number | null {
     const normalizedName = name.toLowerCase().replace(/\.app$/, '');
     const apps = this.getApplications();

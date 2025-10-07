@@ -1,5 +1,4 @@
 import { ActionIcon, Menu, Box, useMantineColorScheme } from '@mantine/core';
-import { IconSun, IconMoon, IconDeviceDesktop, IconCheck } from '@tabler/icons-react';
 import { useTheme } from '../../../contexts/ThemeContext';
 
 type ThemeValue = 'light' | 'dark' | 'system';
@@ -16,9 +15,9 @@ export const ThemeToggle = () => {
   const isDark = colorScheme === 'dark';
 
   const themes: readonly ThemeOption[] = [
-    { value: 'light', label: 'Light', icon: <IconSun size={16} /> },
-    { value: 'dark', label: 'Dark', icon: <IconMoon size={16} /> },
-    { value: 'system', label: 'System', icon: <IconDeviceDesktop size={16} /> },
+    { value: 'light', label: 'Light', icon: <span style={{ fontSize: '16px' }}>☀️</span> },
+    { value: 'dark', label: 'Dark', icon: <span style={{ fontSize: '16px' }}>🌙</span> },
+    { value: 'system', label: 'System', icon: <span style={{ fontSize: '16px' }}>💻</span> },
   ] as const;
 
   const currentTheme = themes.find((t) => t.value === theme) || themes[2];
@@ -70,10 +69,7 @@ export const ThemeToggle = () => {
               <span style={{ marginRight: '0.5rem' }}>{item.icon}</span>
               <span>{item.label}</span>
               {theme === item.value && (
-                <IconCheck 
-                  size={16} 
-                  style={{ marginLeft: 'auto', }} 
-                />
+                <span style={{ marginLeft: 'auto', fontSize: '16px' }}>✓</span>
               )}
             </Box>
           </Menu.Item>

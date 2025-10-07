@@ -22,7 +22,6 @@ html {
 .app-container {
   max-width: 1400px;
   margin: 0 auto;
-  padding: 0 16px;
 }
 
 .volume-value {
@@ -36,10 +35,6 @@ html {
 @media (max-width: 768px) {
   .app-grid {
     grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)) !important;
-  }
-
-  .volume-slider-container {
-    padding: 8px 0;
   }
 }
 
