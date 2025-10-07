@@ -37,7 +37,7 @@ html {
   .app-grid {
     grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)) !important;
   }
-  
+
   .volume-slider-container {
     padding: 8px 0;
   }
@@ -47,7 +47,6 @@ html {
 .mantine-Card-root {
   transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
-
 
 /* Scrollbar styling */
 ::-webkit-scrollbar {

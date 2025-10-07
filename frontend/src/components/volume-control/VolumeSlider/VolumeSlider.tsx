@@ -1,5 +1,5 @@
-import React, { useState, useCallback, memo } from 'react';
-import { useMantineTheme } from '@mantine/core';
+import React, {useState, useCallback, memo} from 'react';
+import {useMantineTheme} from '@mantine/core';
 import styles from './VolumeSlider.module.css';
 
 type OrientationType = 'horizontal' | 'vertical';
@@ -34,7 +34,7 @@ const VolumeSliderComponent: React.FC<VolumeSliderProps> = ({
   min = 0,
   max = 100,
   step = 1, // 1%
-  orientation = 'vertical',
+  orientation = 'horizontal',
   disabled = false,
   onChange,
   onChangeEnd,
@@ -46,10 +46,13 @@ const VolumeSliderComponent: React.FC<VolumeSliderProps> = ({
   const theme = useMantineTheme();
   const isVertical = orientation === 'vertical';
 
-  const handleVolumeChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    const newVolumeValue = parseFloat(e.target.value);
-    onChange?.(newVolumeValue);
-  }, [onChange]);
+  const handleVolumeChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const newVolumeValue = parseFloat(e.target.value);
+      onChange?.(newVolumeValue);
+    },
+    [onChange]
+  );
 
   const handlePointerUp = useCallback(() => {
     if (isSliderDragging) {
@@ -69,19 +72,21 @@ const VolumeSliderComponent: React.FC<VolumeSliderProps> = ({
     styles.volumeSlider,
     isVertical ? styles.vertical : '',
     disabled ? styles.disabled : '',
-    className
-  ].filter(Boolean).join(' ');
+    className,
+  ]
+    .filter(Boolean)
+    .join(' ');
 
   const sliderStyle = {
     '--fill-percentage': `${fillPercentageValue}%`,
-    ...style
+    ...style,
   } as React.CSSProperties;
 
   // Get color scheme from theme or default to 'light'
   const colorScheme = 'colorScheme' in theme ? theme.colorScheme : 'light';
 
   return (
-    <div 
+    <div
       className={sliderClasses}
       onPointerUp={handlePointerUp}
       onPointerLeave={handlePointerUp}
@@ -119,7 +124,7 @@ const VolumeSliderComponent: React.FC<VolumeSliderProps> = ({
 
 /**
  * A customizable volume slider component with smooth animations and accessibility features.
- * 
+ *
  * Features:
  * - Real-time updates while dragging
  * - Accessible with proper ARIA attributes

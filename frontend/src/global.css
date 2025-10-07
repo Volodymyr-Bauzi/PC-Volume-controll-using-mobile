@@ -9,8 +9,12 @@ body {
 }
 
 /* Theme transitions */
-*, *::before, *::after {
-  transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+*,
+*::before,
+*::after {
+  transition: background-color 0.2s ease, color 0.2s ease,
+    border-color 0.2s ease;
+  box-sizing: border-box;
 }
 
 /* Dark theme specific styles */
@@ -31,7 +35,7 @@ body {
 
 /* Light theme specific styles */
 [data-mantine-color-scheme='light'] {
-  background-color: #ffffff
+  background-color: #ffffff;
 }
 
 [data-mantine-color-scheme='light'] body,
@@ -46,7 +50,6 @@ body {
   position: fixed !important;
   z-index: 1000;
 }
-
 
 [data-mantine-color-scheme='dark'] .mantine-Menu-dropdown,
 [data-mantine-color-scheme='dark'] .mantine-Menu-item {

@@ -25,13 +25,16 @@ class WebSocketService {
           return wsPath;
         }
         const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-        return `${protocol}//${window.location.host}${wsPath.startsWith('/') ? wsPath : `/${wsPath}`}`;
+        return `${protocol}//${window.location.host}${
+          wsPath.startsWith('/') ? wsPath : `/${wsPath}`
+        }`;
       }
 
       // In development, construct WebSocket URL with the correct port
-      const port = import.meta.env.VITE_WS_PORT || import.meta.env.VITE_API_PORT || 8777;
+      const port =
+        import.meta.env.VITE_WS_PORT || import.meta.env.VITE_API_PORT || 8777;
       const host = window.location.hostname;
-      
+
       if (baseUrl && baseUrl.trim() !== '') {
         // If baseUrl is a full URL, convert it to WebSocket URL
         if (baseUrl.startsWith('http')) {
@@ -43,14 +46,14 @@ class WebSocketService {
         const host = baseUrl.includes(':') ? baseUrl : `${baseUrl}:${port}`;
         return `ws://${host}/ws`;
       }
-      
+
       // Default to current host with development port
       return `ws://${host}:${port}/ws`;
-      
     } catch (error) {
       console.error('Error creating WebSocket URL:', error);
       // Fallback to development defaults
-      const port = import.meta.env.VITE_WS_PORT || import.meta.env.VITE_API_PORT || 8777;
+      const port =
+        import.meta.env.VITE_WS_PORT || import.meta.env.VITE_API_PORT || 8777;
       return `ws://${window.location.hostname}:${port}/ws`;
     }
   }
@@ -62,7 +65,7 @@ class WebSocketService {
 
     this.isManuallyClosed = false;
     this.updateStatus('connecting');
-    
+
     try {
       this.socket = new WebSocket(this.url);
       this.setupEventHandlers();
@@ -125,9 +128,12 @@ class WebSocketService {
 
     this.reconnectAttempts++;
     const delay = Math.min(1000 * Math.pow(2, this.reconnectAttempts), 30000);
-    
-    this.updateStatus('connecting', `Reconnecting (${this.reconnectAttempts}/${this.maxReconnectAttempts})...`);
-    
+
+    this.updateStatus(
+      'connecting',
+      `Reconnecting (${this.reconnectAttempts}/${this.maxReconnectAttempts})...`
+    );
+
     this.reconnectTimeout = window.setTimeout(() => {
       this.connect();
     }, delay);
@@ -139,14 +145,14 @@ class WebSocketService {
       this.socket.onmessage = null;
       this.socket.onclose = null;
       this.socket.onerror = null;
-      
+
       if (this.socket.readyState === WebSocket.OPEN) {
         this.socket.close();
       }
-      
+
       this.socket = null;
     }
-    
+
     if (this.reconnectTimeout !== null) {
       clearTimeout(this.reconnectTimeout);
       this.reconnectTimeout = null;
@@ -154,11 +160,11 @@ class WebSocketService {
   }
 
   private updateStatus(status: WebSocketStatus, message?: string): void {
-    this.statusChangeHandlers.forEach(handler => handler(status, message));
+    this.statusChangeHandlers.forEach((handler) => handler(status, message));
   }
 
   private notifyMessageHandlers(data: any): void {
-    this.messageHandlers.forEach(handler => {
+    this.messageHandlers.forEach((handler) => {
       try {
         handler(data);
       } catch (error) {
@@ -193,7 +199,7 @@ class WebSocketService {
 
   getStatus(): WebSocketStatus {
     if (!this.socket) return 'disconnected';
-    
+
     switch (this.socket.readyState) {
       case WebSocket.CONNECTING:
         return 'connecting';
@@ -208,4 +214,4 @@ class WebSocketService {
 }
 
 export default WebSocketService;
-export type { WebSocketStatus, WebSocketMessageHandler, StatusChangeHandler };
+export type {WebSocketStatus, WebSocketMessageHandler, StatusChangeHandler};

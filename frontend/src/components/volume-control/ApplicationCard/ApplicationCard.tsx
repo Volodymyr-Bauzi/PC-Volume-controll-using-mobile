@@ -1,9 +1,9 @@
-import { Card, Text, Button, Group } from '@mantine/core';
-import { memo, useCallback, useMemo } from 'react';
-import { VolumeSlider } from '../VolumeSlider/VolumeSlider';
-import styles from './ApplicationCard.module.css';
+import { Card, Text, Button, Group } from "@mantine/core";
+import { memo, useCallback, useMemo } from "react";
+import { VolumeSlider } from "../VolumeSlider/VolumeSlider";
+import styles from "./ApplicationCard.module.css";
 
-export type OrientationType = 'horizontal' | 'vertical';
+export type OrientationType = "horizontal" | "vertical";
 
 export interface ApplicationCardProps {
   name: string;
@@ -14,7 +14,7 @@ export interface ApplicationCardProps {
   isMuted?: boolean;
   orientation?: OrientationType;
   isSystem?: boolean;
-  className?: string;
+  cn?: string;
   style?: React.CSSProperties;
 }
 
@@ -26,67 +26,113 @@ const ApplicationCardComponent: React.FC<ApplicationCardProps> = ({
   isMuted: isAppMuted = false,
   onToggleMute,
   isSystem = false,
-  orientation = isSystem ? 'horizontal' : 'vertical',
-  className = '',
-  style,
+  orientation = isSystem ? "horizontal" : "vertical",
+  cn = "",
 }) => {
   // Memoize derived values
-  const volumePercentage = useMemo(() => Math.round(initialVolume), [initialVolume]);
-  
+  const volumePercentage = useMemo(
+    () => Math.round(initialVolume),
+    [initialVolume]
+  );
+
   const displayVolume = isAppMuted ? 0 : volumePercentage;
 
   // Memoize handlers
-  const handleVolumeChange = useCallback((value: number) => {
-    // Ensure the value is between 0 and 100
-    const normalizedValue = Math.max(0, Math.min(100, value));
-    onVolumeChange(normalizedValue);
-    
-    // If we're changing volume while muted, unmute
-    if (isAppMuted && onToggleMute) {
-      onToggleMute();
-    }
-  }, [onVolumeChange, isAppMuted, onToggleMute]);
+  const handleVolumeChange = useCallback(
+    (value: number) => {
+      // Ensure the value is between 0 and 100
+      const normalizedValue = Math.max(0, Math.min(100, value));
+      onVolumeChange(normalizedValue);
 
-  const handleVolumeChangeEnd = useCallback((value: number) => {
-    onVolumeChangeEnd?.(value);
-  }, [onVolumeChangeEnd]);
-  
-  const handleToggleMute = useCallback((e: React.MouseEvent) => {
-    e.stopPropagation();
-    onToggleMute?.();
-  }, [onToggleMute]);
+      // If we're changing volume while muted, unmute
+      if (isAppMuted && onToggleMute) {
+        onToggleMute();
+      }
+    },
+    [onVolumeChange, isAppMuted, onToggleMute]
+  );
+
+  const handleVolumeChangeEnd = useCallback(
+    (value: number) => {
+      onVolumeChangeEnd?.(value);
+    },
+    [onVolumeChangeEnd]
+  );
+
+  const handleToggleMute = useCallback(
+    (e: React.MouseEvent) => {
+      e.stopPropagation();
+      onToggleMute?.();
+    },
+    [onToggleMute]
+  );
 
   // Memoize the volume text to prevent unnecessary re-renders
   const volumeText = useMemo(() => {
-    return isAppMuted ? 'Muted' : `${volumePercentage}%`;
+    return isAppMuted ? "Muted" : `${volumePercentage}%`;
   }, [isAppMuted, volumePercentage]);
 
-  const cardClasses = `${styles.card} ${isSystem ? styles.systemCard : styles.appCard}`;
-  const sliderClasses = `${styles.sliderContainer} ${isSystem ? styles.systemSlider : styles.appSlider}`;
-  const volumeTextClasses = `${styles.volumeText} ${isAppMuted ? styles.muted : ''}`;
+  const cardClasses = `${styles.card} ${
+    orientation === "vertical" ? styles.vertical : styles.horizontal
+  }`;
+  const sliderClasses = `${styles.sliderContainer} ${styles.appSlider}`;
+  const volumeTextClasses = `${styles.volumeText} ${
+    isAppMuted ? styles.muted : ""
+  }`;
 
   // Memoize the slider to prevent unnecessary re-renders
-  const volumeSlider = useMemo(() => (
-    <div className={sliderClasses}>
-      <VolumeSlider
-        value={displayVolume}
-        onChange={handleVolumeChange}
-        onChangeEnd={onVolumeChangeEnd ? handleVolumeChangeEnd : undefined}
-        orientation={orientation}
-        className={styles.volumeSlider}
-        aria-label={`Volume control for ${appName}`}
-      />
-    </div>
-  ), [displayVolume, handleVolumeChange, handleVolumeChangeEnd, appName, orientation, sliderClasses]);
-  
+  const volumeSlider = useMemo(
+    () => (
+      <div className={sliderClasses}>
+        <button
+          className={styles.volumeButton}
+          onClick={() => handleVolumeChange(displayVolume - 5)}
+        >
+          -5
+        </button>
+        <button
+          className={styles.volumeButton}
+          onClick={() => handleVolumeChange(displayVolume - 1)}
+        >
+          -1
+        </button>
+
+        <VolumeSlider
+          value={displayVolume}
+          onChange={handleVolumeChange}
+          onChangeEnd={onVolumeChangeEnd ? handleVolumeChangeEnd : undefined}
+          orientation={orientation}
+          className={styles.volumeSlider}
+          aria-label={`Volume control for ${appName}`}
+        />
+        <button
+          className={styles.volumeButton}
+          onClick={() => handleVolumeChange(displayVolume + 1)}
+        >
+          +1
+        </button>
+        <button
+          className={styles.volumeButton}
+          onClick={() => handleVolumeChange(displayVolume + 5)}
+        >
+          +5
+        </button>
+      </div>
+    ),
+    [
+      displayVolume,
+      handleVolumeChange,
+      handleVolumeChangeEnd,
+      appName,
+      orientation,
+      sliderClasses,
+      onVolumeChangeEnd,
+    ]
+  );
+
   return (
     <Card
-      withBorder
-      radius="md"
-      p="md"
-      className={`${cardClasses} ${className}`}
-      style={style}
-      role="region"
+      className={`${cardClasses} ${cn}`}
       aria-label={`${appName} volume control`}
     >
       <div>
@@ -97,29 +143,24 @@ const ApplicationCardComponent: React.FC<ApplicationCardProps> = ({
         >
           {appName}
         </Text>
-        
+
         {volumeSlider}
 
-        <Group justify="space-between" align="center" mt="sm">
-          <Text 
-            className={volumeTextClasses}
-            aria-live="polite"
-          >
+        <Group>
+          <Text className={volumeTextClasses} aria-live="polite">
+            {onToggleMute && (
+              <Button
+                variant="light"
+                color={isAppMuted ? "red" : "blue"}
+                onClick={handleToggleMute}
+                size="compact-xs"
+                radius="xl"
+                leftSection={isAppMuted ? <span>🔇</span> : <span>🔊</span>}
+                aria-label={isAppMuted ? "Unmute" : "Mute"}
+              />
+            )}
             {volumeText}
           </Text>
-          {onToggleMute && (
-            <Button 
-              variant="light" 
-              color={isAppMuted ? 'red' : 'blue'}
-              onClick={handleToggleMute}
-              size="compact-xs"
-              radius="xl"
-              leftSection={isAppMuted ? <span>🔇</span> : <span>🔊</span>}
-              aria-label={isAppMuted ? 'Unmute' : 'Mute'}
-            >
-              {isAppMuted ? 'Muted' : 'Mute'}
-            </Button>
-          )}
         </Group>
       </div>
     </Card>
@@ -127,6 +168,6 @@ const ApplicationCardComponent: React.FC<ApplicationCardProps> = ({
 };
 
 export const ApplicationCard = memo(ApplicationCardComponent);
-ApplicationCard.displayName = 'ApplicationCard';
+ApplicationCard.displayName = "ApplicationCard";
 
 export default ApplicationCard;

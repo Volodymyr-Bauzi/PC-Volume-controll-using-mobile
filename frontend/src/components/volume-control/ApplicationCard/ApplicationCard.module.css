@@ -1,4 +1,4 @@
-.card {
+/* .card {
   height: 100%;
   flex: 1;
   display: flex;
@@ -25,16 +25,22 @@
   height: 100%;
 }
 
+.horizontal {
+  flex-direction: row;
+  height: auto;
+  max-width: 400px;
+  height: 20px;
+}
+
+.vertical {
+  flex-direction: column;
+}
+
 .sliderContainer {
   width: 100%;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 1rem 0;
-}
-
-.systemSlider {
-  width: 20vw;
 }
 
 .appSlider {
@@ -72,4 +78,55 @@
 
 .volumeText.dimmed {
   color: var(--mantine-color-dimmed);
+} */
+
+.card {
+  width: 300px;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  box-sizing: border-box;
+}
+
+.appName {
+  font-size: 1.2rem;
+  font-weight: 600;
+  margin: 0;
+  text-align: center;
+  width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.appSlider {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-evenly;
+  margin: 1rem 0 1rem;
+}
+
+.volumeSlider {
+  display: flex;
+  width: 100%;
+  height: 30px;
+  align-items: center;
+  border-radius: 1rem;
+}
+
+.volumeText {
+  display: flex;
+  margin: 0;
+  justify-content: center;
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+
+.volumeButton {
+  border-radius: 1rem;
+  padding: 0.5rem;
 }
