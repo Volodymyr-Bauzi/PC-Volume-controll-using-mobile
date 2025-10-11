@@ -7,6 +7,7 @@
 .mainContainer {
   max-width: 900px;
   margin: 0 auto;
+  padding: 0.5rem;
 }
 
 .loadingBox,
@@ -30,6 +31,13 @@
   align-items: stretch;
 }
 
+.devicesGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 1rem;
+  align-items: stretch;
+}
+
 /* Mobile optimizations */
 @media (max-width: 768px) {
   .headerContainer {
@@ -38,6 +46,7 @@
   }
 
   .mainContainer {
+    padding: 0.5rem;
   }
 
   .systemSection {
@@ -46,6 +55,11 @@
   }
 
   .appsGrid {
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+  }
+
+  .devicesGrid {
     grid-template-columns: 1fr;
     gap: 0.75rem;
   }
@@ -58,30 +72,31 @@
 }
 
 /* Theming tokens for dark/light using Mantine data attribute */
-[data-mantine-color-scheme='dark'] .appsGrid {
+[data-mantine-color-scheme="dark"] .appsGrid {
   --card-bg: rgba(17, 20, 24, 0.85);
-  --card-border: rgba(255, 255, 255, 0.06);
-  --btn-bg: rgba(255, 255, 255, 0.05);
-  --btn-border: rgba(255, 255, 255, 0.06);
+  --card-border: rgba(255,255,255,0.06);
+  --btn-bg: rgba(255,255,255,0.05);
+  --btn-border: rgba(255,255,255,0.06);
   --track-fill: var(--mantine-color-blue-5);
-  --track-bg: rgba(255, 255, 255, 0.08);
+  --track-bg: rgba(255,255,255,0.08);
   --thumb-bg: #0f172a; /* slate-900 */
   --thumb-border: var(--mantine-color-blue-4);
   --focus-ring: rgba(51, 154, 240, 0.25);
-  --text-strong: rgba(255, 255, 255, 0.92);
-  --text-dim: rgba(255, 255, 255, 0.68);
+  --text-strong: rgba(255,255,255,0.92);
+  --text-dim: rgba(255,255,255,0.68);
 }
 
-[data-mantine-color-scheme='light'] .appsGrid {
+[data-mantine-color-scheme="light"] .appsGrid {
   --card-bg: rgba(255, 255, 255, 0.85);
-  --card-border: rgba(0, 0, 0, 0.06);
-  --btn-bg: rgba(0, 0, 0, 0.04);
-  --btn-border: rgba(0, 0, 0, 0.06);
+  --card-border: rgba(0,0,0,0.06);
+  --btn-bg: rgba(0,0,0,0.04);
+  --btn-border: rgba(0,0,0,0.06);
   --track-fill: var(--mantine-color-blue-6);
-  --track-bg: rgba(0, 0, 0, 0.1);
+  --track-bg: rgba(0,0,0,0.10);
   --thumb-bg: #ffffff;
   --thumb-border: var(--mantine-color-blue-6);
   --focus-ring: rgba(51, 154, 240, 0.25);
-  --text-strong: rgba(17, 17, 17, 0.92);
-  --text-dim: rgba(17, 17, 17, 0.68);
+  --text-strong: rgba(17,17,17,0.92);
+  --text-dim: rgba(17,17,17,0.68);
 }
+

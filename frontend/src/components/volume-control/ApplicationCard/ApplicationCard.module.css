@@ -102,14 +102,12 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background: linear-gradient(
-    135deg,
-    rgba(255, 255, 255, 0.08) 0%,
-    rgba(255, 255, 255, 0.02) 50%,
-    rgba(255, 255, 255, 0.05) 100%
-  );
+  background: linear-gradient(135deg, 
+    rgba(255,255,255,0.08) 0%, 
+    rgba(255,255,255,0.02) 50%, 
+    rgba(255,255,255,0.05) 100%);
   border-radius: 20px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255,255,255,0.1);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   opacity: 0;
@@ -147,12 +145,7 @@
   transform: translateX(-50%);
   width: 30px;
   height: 2px;
-  background: linear-gradient(
-    90deg,
-    transparent,
-    var(--mantine-color-blue-5),
-    transparent
-  );
+  background: linear-gradient(90deg, transparent, var(--mantine-color-blue-5), transparent);
   border-radius: 1px;
 }
 
@@ -164,15 +157,15 @@
   gap: 1rem;
   margin: 1rem 0 1.5rem;
   padding: 1rem;
-  background: rgba(255, 255, 255, 0.03);
+  background: rgba(255,255,255,0.03);
   border-radius: 16px;
-  border: 1px solid rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255,255,255,0.05);
   transition: all 0.3s ease;
 }
 
 .appSlider:hover {
-  background: rgba(255, 255, 255, 0.05);
-  border-color: rgba(255, 255, 255, 0.1);
+  background: rgba(255,255,255,0.05);
+  border-color: rgba(255,255,255,0.1);
   transform: scale(1.02);
 }
 
@@ -193,31 +186,25 @@
   color: var(--text-strong, inherit);
   position: relative;
   padding: 0.5rem 1rem;
-  background: rgba(255, 255, 255, 0.05);
+  background: rgba(255,255,255,0.05);
   border-radius: 12px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255,255,255,0.08);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
   transition: all 0.3s ease;
 }
 
 .volumeText:hover {
-  background: rgba(255, 255, 255, 0.08);
-  border-color: rgba(255, 255, 255, 0.15);
+  background: rgba(255,255,255,0.08);
+  border-color: rgba(255,255,255,0.15);
   transform: scale(1.05);
 }
 
 .volumeButton {
-  display: flex;
-  justify-content: center;
   border-radius: 12px;
-  padding: 0.75rem 1rem;
-  background: linear-gradient(
-    135deg,
-    rgba(255, 255, 255, 0.08),
-    rgba(255, 255, 255, 0.04)
-  );
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  padding: 0.6rem 0.8rem;
+  background: linear-gradient(135deg, rgba(255,255,255,0.08), rgba(255,255,255,0.04));
+  border: 1px solid rgba(255,255,255,0.12);
   color: inherit;
   cursor: pointer;
   font-weight: 600;
@@ -236,12 +223,7 @@
   left: -100%;
   width: 100%;
   height: 100%;
-  background: linear-gradient(
-    90deg,
-    transparent,
-    rgba(255, 255, 255, 0.1),
-    transparent
-  );
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
   transition: left 0.5s ease;
 }
 
@@ -250,14 +232,10 @@
 }
 
 .volumeButton:hover {
-  background: linear-gradient(
-    135deg,
-    rgba(255, 255, 255, 0.12),
-    rgba(255, 255, 255, 0.08)
-  );
-  border-color: rgba(255, 255, 255, 0.2);
+  background: linear-gradient(135deg, rgba(255,255,255,0.12), rgba(255,255,255,0.08));
+  border-color: rgba(255,255,255,0.2);
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
 }
 
 .volumeButton:active {
@@ -267,7 +245,7 @@
 /* Mobile tweaks */
 @media (max-width: 768px) {
   .card {
-    padding: 0;
+    padding: 1rem 0.75rem;
   }
 
   .appName {
@@ -278,16 +256,15 @@
   .appSlider {
     padding: 0.75rem;
     gap: 0.75rem;
-    width: 100vw;
   }
 
   .volumeSlider {
-    /* height: 48px; */
+    height: 48px;
     min-width: 200px;
   }
 
   .volumeButton {
-    /* padding: 0.5rem 0.6rem; */
+    padding: 0.5rem 0.6rem;
     font-size: 0.85rem;
   }
 
