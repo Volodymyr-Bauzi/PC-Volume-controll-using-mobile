@@ -1,8 +1,6 @@
-import React, {useState, useCallback, memo} from 'react';
-import {useMantineTheme} from '@mantine/core';
-import styles from './VolumeSlider.module.css';
-
-type OrientationType = 'horizontal' | 'vertical';
+import React, { useState, useCallback, memo } from "react";
+import { useMantineTheme } from "@mantine/core";
+import styles from "./VolumeSlider.module.css";
 
 export interface VolumeSliderProps {
   /** Current value of the slider */
@@ -13,8 +11,6 @@ export interface VolumeSliderProps {
   max?: number;
   /** Step value for the slider */
   step?: number;
-  /** Orientation of the slider */
-  orientation?: OrientationType;
   /** Whether the slider is disabled */
   disabled?: boolean;
   /** Callback when the value changes */
@@ -24,7 +20,7 @@ export interface VolumeSliderProps {
   /** Additional class name */
   className?: string;
   /** ARIA label for accessibility */
-  'aria-label'?: string;
+  "aria-label"?: string;
   /** Inline styles */
   style?: React.CSSProperties;
 }
@@ -34,17 +30,15 @@ const VolumeSliderComponent: React.FC<VolumeSliderProps> = ({
   min = 0,
   max = 100,
   step = 1, // 1%
-  orientation = 'horizontal',
   disabled = false,
   onChange,
   onChangeEnd,
-  className = '',
+  className = "",
   style,
   ...props
 }) => {
   const [isSliderDragging, setIsSliderDragging] = useState(false);
   const theme = useMantineTheme();
-  const isVertical = orientation === 'vertical';
 
   const handleVolumeChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -70,20 +64,19 @@ const VolumeSliderComponent: React.FC<VolumeSliderProps> = ({
   const fillPercentageValue = ((value - min) / (max - min)) * 100;
   const sliderClasses = [
     styles.volumeSlider,
-    isVertical ? styles.vertical : '',
-    disabled ? styles.disabled : '',
+    disabled ? styles.disabled : "",
     className,
   ]
     .filter(Boolean)
-    .join(' ');
+    .join(" ");
 
   const sliderStyle = {
-    '--fill-percentage': `${fillPercentageValue}%`,
+    "--fill-percentage": `${fillPercentageValue}%`,
     ...style,
   } as React.CSSProperties;
 
   // Get color scheme from theme or default to 'light'
-  const colorScheme = 'colorScheme' in theme ? theme.colorScheme : 'light';
+  const colorScheme = "colorScheme" in theme ? theme.colorScheme : "light";
 
   return (
     <div
@@ -111,8 +104,7 @@ const VolumeSliderComponent: React.FC<VolumeSliderProps> = ({
             onChange?.(newValue);
           }
         }}
-        aria-label={props['aria-label']}
-        aria-orientation={orientation}
+        aria-label={props["aria-label"]}
         aria-valuemin={min}
         aria-valuemax={max}
         aria-valuenow={value}
@@ -129,10 +121,9 @@ const VolumeSliderComponent: React.FC<VolumeSliderProps> = ({
  * - Real-time updates while dragging
  * - Accessible with proper ARIA attributes
  * - Smooth animations for better UX
- * - Support for both horizontal and vertical orientations
  * - Disabled state support
  */
 export const VolumeSlider = memo(VolumeSliderComponent);
-VolumeSlider.displayName = 'VolumeSlider';
+VolumeSlider.displayName = "VolumeSlider";
 
 export default VolumeSlider;

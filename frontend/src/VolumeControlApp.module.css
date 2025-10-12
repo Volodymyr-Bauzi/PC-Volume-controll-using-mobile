@@ -1,102 +1,491 @@
-.headerContainer {
-  width: 100%;
-  max-width: 700px;
+/* Main app container */
+.appContainer {
+  min-height: 100vh;
+  padding: 2rem;
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+/* Dark theme app container */
+[data-mantine-color-scheme="dark"] .appContainer {
+  background: linear-gradient(135deg, #1a1b23 0%, #2d2e36 100%);
+}
+
+/* Light theme app container */
+[data-mantine-color-scheme="light"] .appContainer {
+  background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+}
+
+/* Header section */
+.header {
+  text-align: center;
+  margin-bottom: 3rem;
+  position: relative;
+}
+
+.title {
+  font-size: 2.5rem;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+  letter-spacing: -0.02em;
+}
+
+/* Dark theme title */
+[data-mantine-color-scheme="dark"] .title {
+  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Light theme title */
+[data-mantine-color-scheme="light"] .title {
+  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.subtitle {
+  font-size: 1.1rem;
+  font-weight: 400;
+  margin-bottom: 1rem;
+}
+
+/* Dark theme subtitle */
+[data-mantine-color-scheme="dark"] .subtitle {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+/* Light theme subtitle */
+[data-mantine-color-scheme="light"] .subtitle {
+  color: rgba(17, 17, 17, 0.7);
+}
+
+.themeToggle {
+  position: absolute;
+  top: 0;
+  right: 0;
+}
+
+/* Content area */
+.content {
+  max-width: 1200px;
   margin: 0 auto;
 }
 
-.mainContainer {
-  max-width: 900px;
-  margin: 0 auto;
-  padding: 0.5rem;
+/* Volume grid layout */
+.volumeGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.5rem;
+  align-items: start;
 }
 
+/* Volume card styling */
+.volumeCard {
+  border-radius: 16px;
+  padding: 1.5rem;
+  backdrop-filter: blur(20px);
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.volumeCard::after {
+  content: "Scroll to adjust volume";
+  position: absolute;
+  bottom: 8px;
+  right: 8px;
+  font-size: 0.7rem;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+  color: rgba(99, 102, 241, 0.7);
+  font-weight: 500;
+}
+
+.volumeCard:hover::after {
+  opacity: 1;
+}
+
+/* Modal styles */
+.modalIcon {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(99, 102, 241, 0.2);
+  border-radius: 8px;
+  border: 1px solid rgba(99, 102, 241, 0.3);
+  color: #6366f1;
+}
+
+.modalIcon svg {
+  width: 20px;
+  height: 20px;
+}
+
+.modalVolumeDisplay {
+  text-align: center;
+  padding: 1rem;
+  background: rgba(99, 102, 241, 0.1);
+  border-radius: 12px;
+  border: 1px solid rgba(99, 102, 241, 0.2);
+}
+
+.modalSlider {
+  margin: 1rem 0;
+}
+
+/* Dark theme volume cards */
+[data-mantine-color-scheme="dark"] .volumeCard {
+  background: rgba(30, 31, 41, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+[data-mantine-color-scheme="dark"] .volumeCard::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(
+    135deg,
+    rgba(99, 102, 241, 0.1),
+    rgba(139, 92, 246, 0.1)
+  );
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  z-index: -1;
+}
+
+[data-mantine-color-scheme="dark"] .volumeCard:hover::before {
+  opacity: 1;
+}
+
+[data-mantine-color-scheme="dark"] .volumeCard:hover {
+  transform: translateY(-4px);
+  border-color: rgba(99, 102, 241, 0.3);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+}
+
+.volumeCard:focus {
+  outline: 2px solid #6366f1;
+  outline-offset: 2px;
+  transform: translateY(-2px);
+  border-color: rgba(99, 102, 241, 0.4);
+  box-shadow: 0 15px 30px rgba(99, 102, 241, 0.2);
+}
+
+.volumeCard:focus-visible {
+  outline: 2px solid #6366f1;
+  outline-offset: 2px;
+}
+
+/* Light theme volume cards */
+[data-mantine-color-scheme="light"] .volumeCard {
+  background: rgba(255, 255, 255, 0.8);
+  border: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+[data-mantine-color-scheme="light"] .volumeCard::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(
+    135deg,
+    rgba(99, 102, 241, 0.05),
+    rgba(139, 92, 246, 0.05)
+  );
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  z-index: -1;
+}
+
+[data-mantine-color-scheme="light"] .volumeCard:hover::before {
+  opacity: 1;
+}
+
+[data-mantine-color-scheme="light"] .volumeCard:hover {
+  transform: translateY(-4px);
+  border-color: rgba(99, 102, 241, 0.2);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+}
+
+[data-mantine-color-scheme="light"] .volumeCard:focus {
+  outline: 2px solid #6366f1;
+  outline-offset: 2px;
+  transform: translateY(-2px);
+  border-color: rgba(99, 102, 241, 0.3);
+  box-shadow: 0 15px 30px rgba(99, 102, 241, 0.15);
+}
+
+/* Card header */
+.cardHeader {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+}
+
+.appIcon {
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(99, 102, 241, 0.2);
+  border-radius: 12px;
+  border: 1px solid rgba(99, 102, 241, 0.3);
+  color: #6366f1;
+  transition: all 0.3s ease;
+}
+
+.appIcon:hover {
+  background: rgba(99, 102, 241, 0.3);
+  border-color: rgba(99, 102, 241, 0.5);
+  transform: scale(1.05);
+}
+
+.appIcon svg {
+  width: 24px;
+  height: 24px;
+  transition: all 0.3s ease;
+}
+
+/* Dark theme app icon */
+[data-mantine-color-scheme="dark"] .appIcon {
+  background: rgba(99, 102, 241, 0.2);
+  border-color: rgba(99, 102, 241, 0.3);
+  color: #6366f1;
+}
+
+[data-mantine-color-scheme="dark"] .appIcon:hover {
+  background: rgba(99, 102, 241, 0.3);
+  border-color: rgba(99, 102, 241, 0.5);
+}
+
+/* Light theme app icon */
+[data-mantine-color-scheme="light"] .appIcon {
+  background: rgba(99, 102, 241, 0.15);
+  border-color: rgba(99, 102, 241, 0.25);
+  color: #6366f1;
+}
+
+[data-mantine-color-scheme="light"] .appIcon:hover {
+  background: rgba(99, 102, 241, 0.25);
+  border-color: rgba(99, 102, 241, 0.4);
+}
+
+.appTitle {
+  font-size: 1.1rem;
+  font-weight: 600;
+  flex: 1;
+}
+
+/* Dark theme app title */
+[data-mantine-color-scheme="dark"] .appTitle {
+  color: rgba(255, 255, 255, 0.9);
+}
+
+/* Light theme app title */
+[data-mantine-color-scheme="light"] .appTitle {
+  color: rgba(17, 17, 17, 0.9);
+}
+
+/* Slider container */
+.sliderContainer {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.sliderLabel {
+  font-size: 0.85rem;
+  font-weight: 500;
+  min-width: 20px;
+  text-align: center;
+}
+
+/* Dark theme slider labels */
+[data-mantine-color-scheme="dark"] .sliderLabel {
+  color: rgba(255, 255, 255, 0.6);
+}
+
+/* Light theme slider labels */
+[data-mantine-color-scheme="light"] .sliderLabel {
+  color: rgba(17, 17, 17, 0.6);
+}
+
+/* Current volume display */
+.currentVolume {
+  font-size: 2.5rem;
+  font-weight: 700;
+  text-align: center;
+  margin: 1rem 0 1.5rem 0;
+  background: transparent;
+  border: none;
+  padding: 0;
+}
+
+/* Dark theme volume display */
+[data-mantine-color-scheme="dark"] .currentVolume {
+  color: rgba(255, 255, 255, 0.95);
+}
+
+/* Light theme volume display */
+[data-mantine-color-scheme="light"] .currentVolume {
+  color: rgba(17, 17, 17, 0.95);
+}
+
+/* Control buttons */
+.controlButtons {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin-top: 1rem;
+}
+
+.controlButton {
+  transition: all 0.2s ease;
+  backdrop-filter: blur(10px);
+  min-width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
+/* Dark theme control buttons */
+[data-mantine-color-scheme="dark"] .controlButton {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: rgba(255, 255, 255, 0.8);
+}
+
+[data-mantine-color-scheme="dark"] .controlButton:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.25);
+  color: rgba(255, 255, 255, 0.95);
+  transform: translateY(-1px);
+}
+
+/* Light theme control buttons */
+[data-mantine-color-scheme="light"] .controlButton {
+  background: rgba(0, 0, 0, 0.05);
+  border: 1px solid rgba(0, 0, 0, 0.15);
+  color: rgba(17, 17, 17, 0.8);
+}
+
+[data-mantine-color-scheme="light"] .controlButton:hover {
+  background: rgba(0, 0, 0, 0.1);
+  border-color: rgba(0, 0, 0, 0.25);
+  color: rgba(17, 17, 17, 0.95);
+  transform: translateY(-1px);
+}
+
+/* Loading and error states */
 .loadingBox,
 .errorBox {
   text-align: center;
-  padding: 2rem 0;
+  padding: 3rem 0;
+  border-radius: 16px;
+  backdrop-filter: blur(20px);
 }
 
-.systemSection {
-  margin-bottom: 1.5rem;
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-  align-items: center;
+/* Dark theme loading/error boxes */
+[data-mantine-color-scheme="dark"] .loadingBox,
+[data-mantine-color-scheme="dark"] .errorBox {
+  background: rgba(30, 31, 41, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
-.appsGrid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 1rem;
-  align-items: stretch;
+/* Light theme loading/error boxes */
+[data-mantine-color-scheme="light"] .loadingBox,
+[data-mantine-color-scheme="light"] .errorBox {
+  background: rgba(255, 255, 255, 0.8);
+  border: 1px solid rgba(0, 0, 0, 0.1);
 }
 
-.devicesGrid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-  gap: 1rem;
-  align-items: stretch;
+/* Mobile responsive design */
+@media (max-width: 1024px) {
+  .volumeGrid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+  }
+
+  .appContainer {
+    padding: 1rem;
+  }
+
+  .title {
+    font-size: 2rem;
+  }
 }
 
-/* Mobile optimizations */
 @media (max-width: 768px) {
-  .headerContainer {
-    max-width: 100%;
-    padding: 0 0.75rem;
+  .volumeGrid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
   }
 
-  .mainContainer {
-    padding: 0.5rem;
+  .appContainer {
+    padding: 0.75rem;
   }
 
-  .systemSection {
+  .title {
+    font-size: 1.75rem;
+  }
+
+  .subtitle {
+    font-size: 1rem;
+  }
+
+  .volumeCard {
+    padding: 1rem;
+  }
+
+  .cardHeader {
     margin-bottom: 1rem;
-    gap: 0.5rem;
   }
 
-  .appsGrid {
-    grid-template-columns: 1fr;
-    gap: 0.75rem;
+  .appIcon {
+    width: 32px;
+    height: 32px;
+    font-size: 1.25rem;
   }
 
-  .devicesGrid {
-    grid-template-columns: 1fr;
-    gap: 0.75rem;
+  .appTitle {
+    font-size: 1rem;
+  }
+
+  /* Display current volume at right position of volume slider */
+  .currentVolume {
+    font-size: 1rem;
+    margin: 0;
+    padding: 0;
+  }
+
+  .controlButtons {
+    gap: 0.25rem;
   }
 }
 
-/* Prevent page scroll/jump during slider interaction */
-.noScrollOnTouch {
-  overscroll-behavior: contain;
-  touch-action: manipulation;
-}
+@media (max-width: 480px) {
+  .themeToggle {
+    position: static;
+    margin-top: 1rem;
+  }
 
-/* Theming tokens for dark/light using Mantine data attribute */
-[data-mantine-color-scheme="dark"] .appsGrid {
-  --card-bg: rgba(17, 20, 24, 0.85);
-  --card-border: rgba(255,255,255,0.06);
-  --btn-bg: rgba(255,255,255,0.05);
-  --btn-border: rgba(255,255,255,0.06);
-  --track-fill: var(--mantine-color-blue-5);
-  --track-bg: rgba(255,255,255,0.08);
-  --thumb-bg: #0f172a; /* slate-900 */
-  --thumb-border: var(--mantine-color-blue-4);
-  --focus-ring: rgba(51, 154, 240, 0.25);
-  --text-strong: rgba(255,255,255,0.92);
-  --text-dim: rgba(255,255,255,0.68);
-}
-
-[data-mantine-color-scheme="light"] .appsGrid {
-  --card-bg: rgba(255, 255, 255, 0.85);
-  --card-border: rgba(0,0,0,0.06);
-  --btn-bg: rgba(0,0,0,0.04);
-  --btn-border: rgba(0,0,0,0.06);
-  --track-fill: var(--mantine-color-blue-6);
-  --track-bg: rgba(0,0,0,0.10);
-  --thumb-bg: #ffffff;
-  --thumb-border: var(--mantine-color-blue-6);
-  --focus-ring: rgba(51, 154, 240, 0.25);
-  --text-strong: rgba(17,17,17,0.92);
-  --text-dim: rgba(17,17,17,0.68);
+  .header {
+    margin-bottom: 2rem;
+  }
 }
 

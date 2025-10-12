@@ -4,6 +4,8 @@
   user-select: none;
   -webkit-user-select: none;
   touch-action: pan-y;
+
+  flex: 1;
 }
 
 .vertical {
@@ -27,12 +29,20 @@
 /* Track */
 .sliderInput::-webkit-slider-runnable-track {
   height: 12px;
-  background: linear-gradient(90deg, var(--track-fill, var(--mantine-color-blue-6)) var(--fill-percentage), var(--track-bg, rgba(255,255,255,0.14)) var(--fill-percentage));
+  background: linear-gradient(
+    90deg,
+    var(--track-fill, var(--mantine-color-blue-6)) var(--fill-percentage),
+    var(--track-bg, rgba(255, 255, 255, 0.14)) var(--fill-percentage)
+  );
   border-radius: 999px;
 }
 .sliderInput::-moz-range-track {
   height: 12px;
-  background: linear-gradient(90deg, var(--track-fill, var(--mantine-color-blue-6)) var(--fill-percentage), var(--track-bg, rgba(255,255,255,0.14)) var(--fill-percentage));
+  background: linear-gradient(
+    90deg,
+    var(--track-fill, var(--mantine-color-blue-6)) var(--fill-percentage),
+    var(--track-bg, rgba(255, 255, 255, 0.14)) var(--fill-percentage)
+  );
   border-radius: 999px;
 }
 
@@ -46,7 +56,7 @@
   border-radius: 50%;
   background: var(--thumb-bg, #1f2937);
   border: 3px solid var(--thumb-border, var(--mantine-color-blue-6));
-  box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
 }
 .sliderInput::-moz-range-thumb {
   width: 24px;
@@ -54,7 +64,7 @@
   border-radius: 50%;
   background: var(--thumb-bg, #1f2937);
   border: 3px solid var(--thumb-border, var(--mantine-color-blue-6));
-  box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
 }
 
 /* Focus ring */
@@ -62,10 +72,12 @@
   outline: none;
 }
 .sliderInput:focus-visible::-webkit-slider-thumb {
-  box-shadow: 0 0 0 6px var(--focus-ring, rgba(51, 154, 240, 0.25)), 0 2px 8px rgba(0,0,0,0.3);
+  box-shadow: 0 0 0 6px var(--focus-ring, rgba(51, 154, 240, 0.25)),
+    0 2px 8px rgba(0, 0, 0, 0.3);
 }
 .sliderInput:focus-visible::-moz-range-thumb {
-  box-shadow: 0 0 0 6px var(--focus-ring, rgba(51, 154, 240, 0.25)), 0 2px 8px rgba(0,0,0,0.3);
+  box-shadow: 0 0 0 6px var(--focus-ring, rgba(51, 154, 240, 0.25)),
+    0 2px 8px rgba(0, 0, 0, 0.3);
 }
 
 @media (max-width: 768px) {
@@ -86,4 +98,3 @@
     height: 28px;
   }
 }
-

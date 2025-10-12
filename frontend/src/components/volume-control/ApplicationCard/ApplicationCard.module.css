@@ -1,85 +1,3 @@
-/* .card {
-  height: 100%;
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  transition: transform 150ms ease, box-shadow 150ms ease;
-  position: relative;
-  overflow: visible;
-  padding: 1rem;
-}
-
-.systemCard {
-  width: 100%;
-  max-width: 500px;
-  margin: 0 auto 2rem;
-  min-height: auto;
-  padding: 1.5rem;
-}
-
-.appCard {
-  min-width: 140px;
-  max-width: 200px;
-  height: 100%;
-}
-
-.horizontal {
-  flex-direction: row;
-  height: auto;
-  max-width: 400px;
-  height: 20px;
-}
-
-.vertical {
-  flex-direction: column;
-}
-
-.sliderContainer {
-  width: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.appSlider {
-  min-height: 140px;
-  max-height: 200px;
-  margin: 0 auto;
-  width: 100%;
-}
-
-.volumeText {
-  min-height: var(--mantine-spacing-md);
-  font-size: 1.1rem;
-  font-weight: 600;
-  margin-top: 1rem;
-  text-align: center;
-  width: 100%;
-  color: var(--mantine-color-dimmed);
-}
-
-.volumeText.muted {
-  color: var(--mantine-color-red-6);
-}
-
-.appName {
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  width: 100%;
-  font-size: 1rem;
-  line-height: 1.2;
-  margin-bottom: 0.5rem;
-  text-align: center;
-  font-weight: 500;
-}
-
-.volumeText.dimmed {
-  color: var(--mantine-color-dimmed);
-} */
-
 .card {
   width: 100%;
   display: flex;
@@ -96,18 +14,20 @@
 }
 
 .card::before {
-  content: '';
+  content: "";
   position: absolute;
   top: 0;
   left: 0;
   right: 0;
   bottom: 0;
-  background: linear-gradient(135deg, 
-    rgba(255,255,255,0.08) 0%, 
-    rgba(255,255,255,0.02) 50%, 
-    rgba(255,255,255,0.05) 100%);
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.08) 0%,
+    rgba(255, 255, 255, 0.02) 50%,
+    rgba(255, 255, 255, 0.05) 100%
+  );
   border-radius: 20px;
-  border: 1px solid rgba(255,255,255,0.1);
+  border: 1px solid rgba(255, 255, 255, 0.1);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   opacity: 0;
@@ -138,14 +58,19 @@
 }
 
 .appName::after {
-  content: '';
+  content: "";
   position: absolute;
   bottom: -8px;
   left: 50%;
   transform: translateX(-50%);
   width: 30px;
   height: 2px;
-  background: linear-gradient(90deg, transparent, var(--mantine-color-blue-5), transparent);
+  background: linear-gradient(
+    90deg,
+    transparent,
+    var(--mantine-color-blue-5),
+    transparent
+  );
   border-radius: 1px;
 }
 
@@ -157,15 +82,15 @@
   gap: 1rem;
   margin: 1rem 0 1.5rem;
   padding: 1rem;
-  background: rgba(255,255,255,0.03);
+  background: rgba(255, 255, 255, 0.03);
   border-radius: 16px;
-  border: 1px solid rgba(255,255,255,0.05);
+  border: 1px solid rgba(255, 255, 255, 0.05);
   transition: all 0.3s ease;
 }
 
 .appSlider:hover {
-  background: rgba(255,255,255,0.05);
-  border-color: rgba(255,255,255,0.1);
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.1);
   transform: scale(1.02);
 }
 
@@ -186,25 +111,29 @@
   color: var(--text-strong, inherit);
   position: relative;
   padding: 0.5rem 1rem;
-  background: rgba(255,255,255,0.05);
+  background: rgba(255, 255, 255, 0.05);
   border-radius: 12px;
-  border: 1px solid rgba(255,255,255,0.08);
+  border: 1px solid rgba(255, 255, 255, 0.08);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
   transition: all 0.3s ease;
 }
 
 .volumeText:hover {
-  background: rgba(255,255,255,0.08);
-  border-color: rgba(255,255,255,0.15);
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.15);
   transform: scale(1.05);
 }
 
 .volumeButton {
   border-radius: 12px;
   padding: 0.6rem 0.8rem;
-  background: linear-gradient(135deg, rgba(255,255,255,0.08), rgba(255,255,255,0.04));
-  border: 1px solid rgba(255,255,255,0.12);
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.08),
+    rgba(255, 255, 255, 0.04)
+  );
+  border: 1px solid rgba(255, 255, 255, 0.12);
   color: inherit;
   cursor: pointer;
   font-weight: 600;
@@ -217,13 +146,18 @@
 }
 
 .volumeButton::before {
-  content: '';
+  content: "";
   position: absolute;
   top: 0;
   left: -100%;
   width: 100%;
   height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.1),
+    transparent
+  );
   transition: left 0.5s ease;
 }
 
@@ -232,10 +166,14 @@
 }
 
 .volumeButton:hover {
-  background: linear-gradient(135deg, rgba(255,255,255,0.12), rgba(255,255,255,0.08));
-  border-color: rgba(255,255,255,0.2);
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.12),
+    rgba(255, 255, 255, 0.08)
+  );
+  border-color: rgba(255, 255, 255, 0.2);
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
 .volumeButton:active {
@@ -264,8 +202,8 @@
   }
 
   .volumeButton {
-    padding: 0.5rem 0.6rem;
-    font-size: 0.85rem;
+    padding: 1rem 1rem;
+    font-size: 1rem;
   }
 
   .volumeText {
