@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect, useRef } from "react";
-import { type Application } from "../services/api";
+import type { Application } from '@/types';
 import api from "../services/api";
 
 // Store previous volume levels when muting
@@ -49,7 +49,13 @@ export const useVolumeControl = (initialApplications: Application[] = []) => {
       setIsLoading(true);
       setError(null);
 
-      const apps = await api.getApplications(controller.signal);
+      let apps = await api.getApplications(controller.signal);
+      console.log("apps: ", apps);
+      // ! remove duplicate objects with same names
+      apps = apps.filter(
+        (app, index) => apps.findIndex((a) => a.name === app.name) === index
+      );
+      console.log("apps: ", apps);
       setApplications(apps);
       return apps;
     } catch (err) {

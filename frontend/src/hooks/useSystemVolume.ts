@@ -1,5 +1,19 @@
-import {useState, useEffect, useCallback, useRef} from 'react';
-import api from '../services/api';
+import { useState, useEffect, useCallback, useRef } from "react";
+import api from "../services/api";
+
+const usePreviousVolume = () => {
+  const prevVolumesRef = useRef<Record<string, number>>({});
+
+  const saveVolume = useCallback((volume: number) => {
+    prevVolumesRef.current["system"] = volume;
+  }, []);
+
+  const getVolume = useCallback(() => {
+    return prevVolumesRef.current["system"] ?? 50; // Default to 50 if no previous volume
+  }, []);
+
+  return { saveVolume, getVolume };
+};
 
 export const useSystemVolume = () => {
   const [volume, setVolume] = useState(100);
@@ -8,6 +22,7 @@ export const useSystemVolume = () => {
   const [error, setError] = useState<string | null>(null);
   const volumeRequestController = useRef<AbortController | null>(null);
   const isMounted = useRef(true);
+  const { saveVolume, getVolume } = usePreviousVolume();
 
   const fetchSystemVolume = useCallback(async () => {
     if (volumeRequestController.current) {
@@ -30,11 +45,12 @@ export const useSystemVolume = () => {
 
       setVolume(volumeResponse.volume);
       setIsMuted(muteResponse.isMuted);
+      saveVolume(volumeResponse.volume);
     } catch (err) {
       if (controller.signal.aborted) return;
       if (isMounted.current) {
-        setError('Failed to fetch system volume');
-        console.error('Error fetching system volume:', err);
+        setError("Failed to fetch system volume");
+        console.error("Error fetching system volume:", err);
       }
     } finally {
       if (volumeRequestController.current === controller) {
@@ -67,7 +83,7 @@ export const useSystemVolume = () => {
 
         // Revert to previous state on error
         if (isMounted.current) {
-          setError('Failed to update system volume');
+          setError("Failed to update system volume");
           console.error(err);
           // Refresh actual state from server
           fetchSystemVolume();
@@ -93,7 +109,7 @@ export const useSystemVolume = () => {
       }
     } catch (err) {
       if (isMounted.current) {
-        setError('Failed to toggle mute');
+        setError("Failed to toggle mute");
         console.error(err);
         // Revert on error
         setIsMuted(previousMuted);

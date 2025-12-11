@@ -1,45 +1,30 @@
-import { useState, useCallback, useRef, useEffect } from "react";
-import {
-  Text,
-  Title,
-  Button,
-  Box,
-  Card,
-  Slider,
-  ActionIcon,
-} from "@mantine/core";
-import { useVolumeControl } from "./hooks/useVolumeControl";
-import { useWebSocket } from "./hooks/useWebSocket";
-import { ThemeToggle } from "./components/common/ThemeToggle/ThemeToggle";
-import { useSystemVolume } from "./hooks/useSystemVolume";
-import styles from "./VolumeControlApp.module.css";
-import { getAppIcon } from "./helpers/getAppIcon";
+import { useState, useCallback, useRef, useEffect, useMemo } from 'react';
+import { Text, Title, Button, Box } from '@mantine/core';
+import '@mantine/core/styles.css';
 
-// const HORIZONTAL = "horizontal";
-// const VERTICAL = 'vertical';
+import { useVolumeControl } from './hooks/useVolumeControl';
+import { useWebSocket } from './hooks/useWebSocket';
+import { ThemeToggle } from './components/common/ThemeToggle/ThemeToggle';
+import { useSystemVolume } from './hooks/useSystemVolume';
+import styles from './VolumeControlApp.module.css';
+import { ApplicationCard } from './components/volume-control';
+import { SCROLL_CONFIG, VOLUME_CONSTRAINTS, API_CONFIG } from '@/constants';
+import { clamp, calculateVolumeIncrement } from '@/utils';
 
 export function VolumeControlApp() {
-  const [apiUrl] = useState<string>(() => {
-    // In development, use the configured API URL or default to localhost with port 8777
+  const apiUrl = useMemo(() => {
+    // In development, use the configured API URL or default to localhost with port
     if (import.meta.env.DEV) {
-      const port = import.meta.env.VITE_API_PORT || 8777;
+      const port = import.meta.env.VITE_API_PORT || API_CONFIG.DEFAULT_PORT;
       return `http://${window.location.hostname}:${port}`;
     }
     // In production, use relative URLs or the configured production URL
-    return import.meta.env.VITE_API_URL || "";
-  });
+    return import.meta.env.VITE_API_URL || '';
+  }, []);
 
   // Refs for smooth scrolling
   const scrollTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const lastScrollTimeRef = useRef<number>(0);
-
-  // Modal state
-  const [modalOpen, setModalOpen] = useState(false);
-  const [selectedApp, setSelectedApp] = useState<{
-    name: string;
-    volume: number;
-    isMuted: boolean;
-  } | null>(null);
 
   // Hover state for wheel control
   const [hoveredCard, setHoveredCard] = useState<string | null>(null);
@@ -49,7 +34,6 @@ export function VolumeControlApp() {
     isLoading,
     error,
     handleVolumeChange,
-    handleVolumeChangeEnd,
     handleWebSocketVolumeChange,
     toggleMute,
   } = useVolumeControl([]);
@@ -84,15 +68,21 @@ export function VolumeControlApp() {
       const timeSinceLastScroll = now - lastScrollTimeRef.current;
 
       // Clear any existing timeout
-      if (scrollTimeoutRef.current) {
-        clearTimeout(scrollTimeoutRef.current);
-      }
+      if (scrollTimeoutRef.current) clearTimeout(scrollTimeoutRef.current);
+
+      if (timeSinceLastScroll < SCROLL_CONFIG.DEBOUNCE_MIN_MS) return;
 
       // Calculate new volume with smooth increment
-      const increment = Math.max(1, Math.floor(Math.abs(delta) / 10)); // Minimum 1% change
-      const newVolume = Math.max(
-        0,
-        Math.min(100, currentVolume + (delta > 0 ? increment : -increment))
+      const increment = calculateVolumeIncrement(
+        delta,
+        SCROLL_CONFIG.SENSITIVITY_SCALE,
+        SCROLL_CONFIG.MIN_INCREMENT,
+        SCROLL_CONFIG.MAX_INCREMENT_MULTIPLIER
+      );
+      const newVolume = clamp(
+        currentVolume + (delta > 0 ? increment : -increment),
+        VOLUME_CONSTRAINTS.MIN,
+        VOLUME_CONSTRAINTS.MAX
       );
 
       // Apply the change immediately for responsiveness
@@ -101,15 +91,28 @@ export function VolumeControlApp() {
       // Update last scroll time
       lastScrollTimeRef.current = now;
 
+      const debounceTime = Math.max(
+        SCROLL_CONFIG.DEBOUNCE_BASE_MS -
+          Math.min(
+            SCROLL_CONFIG.DEBOUNCE_MAX_REDUCTION_MS,
+            Math.abs(delta) * SCROLL_CONFIG.DEBOUNCE_DELTA_MULTIPLIER
+          ),
+        100
+      );
+
       // Set a timeout to debounce rapid changes
       scrollTimeoutRef.current = setTimeout(() => {
         // Final volume adjustment after scrolling stops
-        const finalVolume = Math.max(
-          0,
-          Math.min(100, currentVolume + (delta > 0 ? 2 : -2))
+        const finalVolume = clamp(
+          currentVolume +
+            (delta > 0
+              ? SCROLL_CONFIG.FINAL_ADJUSTMENT_STEP
+              : -SCROLL_CONFIG.FINAL_ADJUSTMENT_STEP),
+          VOLUME_CONSTRAINTS.MIN,
+          VOLUME_CONSTRAINTS.MAX
         );
         callback(finalVolume);
-      }, 150);
+      }, debounceTime);
     },
     []
   );
@@ -118,7 +121,6 @@ export function VolumeControlApp() {
   const handleSystemVolumeWheel = useCallback(
     (e: React.WheelEvent) => {
       if (hoveredCard === "master") {
-        e.preventDefault();
         const delta = e.deltaY > 0 ? -5 : 5; // Scroll down decreases, scroll up increases
         smoothVolumeChange(systemVolume, delta, setSystemVolume);
       }
@@ -131,7 +133,6 @@ export function VolumeControlApp() {
     (appName: string, currentVolume: number) => {
       return (e: React.WheelEvent) => {
         if (hoveredCard === appName) {
-          e.preventDefault();
           const delta = e.deltaY > 0 ? -5 : 5; // Scroll down decreases, scroll up increases
           smoothVolumeChange(currentVolume, delta, (newVolume) => {
             handleVolumeChange(appName, newVolume);
@@ -142,34 +143,7 @@ export function VolumeControlApp() {
     [handleVolumeChange, smoothVolumeChange, hoveredCard]
   );
 
-  // Modal handlers
-  const openModal = useCallback(
-    (app: { name: string; volume: number; isMuted: boolean }) => {
-      setSelectedApp(app);
-      setModalOpen(true);
-    },
-    []
-  );
 
-  const closeModal = useCallback(() => {
-    setModalOpen(false);
-    setSelectedApp(null);
-  }, []);
-
-  const handleMasterVolumeClick = useCallback(() => {
-    openModal({
-      name: "Master Volume",
-      volume: systemVolume,
-      isMuted: systemIsMuted,
-    });
-  }, [openModal, systemVolume, systemIsMuted]);
-
-  const handleAppClick = useCallback(
-    (app: { name: string; volume: number; isMuted: boolean }) => {
-      openModal(app);
-    },
-    [openModal]
-  );
 
   // Cleanup timeout on unmount
   useEffect(() => {
@@ -218,183 +192,37 @@ export function VolumeControlApp() {
         ) : (
           <div className={styles.volumeGrid}>
             {/* Master Volume Card */}
-            <Card
-              className={styles.volumeCard}
-              onWheel={handleSystemVolumeWheel}
-              onClick={handleMasterVolumeClick}
-              onMouseEnter={() => setHoveredCard("master")}
-              onMouseLeave={() => setHoveredCard(null)}
-              tabIndex={0}
-              style={{ cursor: "pointer" }}
-            >
-              <div className={styles.cardHeader}>
-                <div className={styles.appIcon}>
-                  {getAppIcon("Master Volume")}
-                </div>
-                <Text className={styles.appTitle}>Master Volume</Text>
-              </div>
-
-              <div className={styles.currentVolume}>{systemVolume}</div>
-
-              <div className={styles.sliderContainer}>
-                <Text className={styles.sliderLabel}>0</Text>
-                <Slider
-                  value={systemVolume}
-                  onChange={setSystemVolume}
-                  className={styles.volumeSlider}
-                  size="lg"
-                  color="blue"
-                  thumbSize={20}
-                />
-                <Text className={styles.sliderLabel}>100</Text>
-              </div>
-
-              <div className={styles.controlButtons}>
-                <ActionIcon
-                  variant="filled"
-                  color={systemIsMuted ? "red" : "blue"}
-                  onClick={toggleSystemMute}
-                  className={styles.controlButton}
-                >
-                  {systemIsMuted ? "🔇" : "🔊"}
-                </ActionIcon>
-                <Button
-                  variant="filled"
-                  color="gray"
-                  size="xs"
-                  onClick={() => setSystemVolume(Math.max(0, systemVolume - 5))}
-                  className={styles.controlButton}
-                >
-                  -5
-                </Button>
-                <Button
-                  variant="filled"
-                  color="gray"
-                  size="xs"
-                  onClick={() => setSystemVolume(Math.max(0, systemVolume - 1))}
-                  className={styles.controlButton}
-                >
-                  -
-                </Button>
-                <Button
-                  variant="filled"
-                  color="gray"
-                  size="xs"
-                  onClick={() =>
-                    setSystemVolume(Math.min(100, systemVolume + 1))
-                  }
-                  className={styles.controlButton}
-                >
-                  +
-                </Button>
-                <Button
-                  variant="filled"
-                  color="gray"
-                  size="xs"
-                  onClick={() =>
-                    setSystemVolume(Math.min(100, systemVolume + 5))
-                  }
-                  className={styles.controlButton}
-                >
-                  +5
-                </Button>
-              </div>
-            </Card>
+            <ApplicationCard
+              app={{
+                name: "Main Volume",
+                volume: systemVolume,
+                isMuted: systemIsMuted,
+              }}
+              onCardHover={() => setHoveredCard("master")}
+              onSystemVolumeChange={setSystemVolume}
+              onMuteToggle={toggleSystemMute}
+              handleVolumeWheel={handleSystemVolumeWheel}
+              masterVolume
+            />
 
             {/* Application Cards */}
-            {applications.slice(0, 5).map((app) => (
-              <Card
-                key={app.name}
-                className={styles.volumeCard}
-                onWheel={handleAppVolumeWheel(app.name, app.volume)}
-                onClick={() => handleAppClick(app)}
-                onMouseEnter={() => setHoveredCard(app.name)}
-                onMouseLeave={() => setHoveredCard(null)}
-                tabIndex={0}
-                style={{ cursor: "pointer" }}
-              >
-                <div className={styles.cardHeader}>
-                  <div className={styles.appIcon}>{getAppIcon(app.name)}</div>
-                  <Text className={styles.appTitle}>{app.name}</Text>
-                </div>
+            {applications.map((app) => {
+              const appVolumeWheel = handleAppVolumeWheel?.(
+                app.name,
+                app.volume
+              );
 
-                <div className={styles.currentVolume}>{app.volume}</div>
-
-                <div className={styles.sliderContainer}>
-                  <Text className={styles.sliderLabel}>0</Text>
-                  <Slider
-                    value={app.volume}
-                    onChange={(volume) => handleVolumeChange(app.name, volume)}
-                    className={styles.volumeSlider}
-                    size="lg"
-                    color="blue"
-                    thumbSize={20}
-                  />
-                  <Text className={styles.sliderLabel}>100</Text>
-                </div>
-
-                <div className={styles.controlButtons}>
-                  <ActionIcon
-                    variant="filled"
-                    color={app.isMuted ? "red" : "blue"}
-                    onClick={() => toggleMute(app.name)}
-                    className={styles.controlButton}
-                  >
-                    {app.isMuted ? "🔇" : "🔊"}
-                  </ActionIcon>
-                  <Button
-                    variant="filled"
-                    color="gray"
-                    size="xs"
-                    onClick={() =>
-                      handleVolumeChange(app.name, Math.max(0, app.volume - 5))
-                    }
-                    className={styles.controlButton}
-                  >
-                    -5
-                  </Button>
-                  <Button
-                    variant="filled"
-                    color="gray"
-                    size="xs"
-                    onClick={() =>
-                      handleVolumeChange(app.name, Math.max(0, app.volume - 1))
-                    }
-                    className={styles.controlButton}
-                  >
-                    -
-                  </Button>
-                  <Button
-                    variant="filled"
-                    color="gray"
-                    size="xs"
-                    onClick={() =>
-                      handleVolumeChange(
-                        app.name,
-                        Math.min(100, app.volume + 1)
-                      )
-                    }
-                    className={styles.controlButton}
-                  >
-                    +
-                  </Button>
-                  <Button
-                    variant="filled"
-                    color="gray"
-                    size="xs"
-                    onClick={() =>
-                      handleVolumeChange(
-                        app.name,
-                        Math.min(100, app.volume + 5)
-                      )
-                    }
-                    className={styles.controlButton}
-                  >
-                    +5
-                  </Button>
-                </div>
-              </Card>
-            ))}
+              return (
+                <ApplicationCard
+                  key={app.name}
+                  app={app}
+                  handleVolumeWheel={appVolumeWheel}
+                  onCardHover={setHoveredCard}
+                  onVolumeChange={handleVolumeChange}
+                  onMuteToggle={toggleMute}
+                />
+              );
+            })}
           </div>
         )}
       </div>

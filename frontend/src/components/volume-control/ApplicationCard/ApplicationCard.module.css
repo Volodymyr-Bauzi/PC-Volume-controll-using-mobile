@@ -1,19 +1,67 @@
-.card {
-  width: 100%;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 1.5rem 1rem;
-  box-sizing: border-box;
+/* Volume card styling */
+.volumeCard {
+  border-radius: 16px;
+  padding: 1.5rem;
+  backdrop-filter: blur(20px);
+  transition: all 0.3s ease;
   position: relative;
-  background: transparent;
-  border: none;
-  box-shadow: none;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  overflow: hidden;
 }
 
-.card::before {
+.volumeCard::after {
+  content: "Scroll to adjust volume";
+  position: absolute;
+  bottom: 8px;
+  right: 8px;
+  font-size: 0.7rem;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+  color: rgba(99, 102, 241, 0.7);
+  font-weight: 500;
+}
+
+.volumeCard:hover::after {
+  opacity: 1;
+}
+
+/* Modal styles */
+.modalIcon {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(99, 102, 241, 0.2);
+  border-radius: 8px;
+  border: 1px solid rgba(99, 102, 241, 0.3);
+  color: #6366f1;
+}
+
+.modalIcon svg {
+  width: 20px;
+  height: 20px;
+}
+
+.modalVolumeDisplay {
+  text-align: center;
+  padding: 1rem;
+  background: rgba(99, 102, 241, 0.1);
+  border-radius: 12px;
+  border: 1px solid rgba(99, 102, 241, 0.2);
+}
+
+.modalSlider {
+  margin: 1rem 0;
+}
+
+/* Dark theme volume cards */
+[data-mantine-color-scheme="dark"] .volumeCard {
+  background: rgba(30, 31, 41, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+[data-mantine-color-scheme="dark"] .volumeCard::before {
   content: "";
   position: absolute;
   top: 0;
@@ -22,192 +70,330 @@
   bottom: 0;
   background: linear-gradient(
     135deg,
-    rgba(255, 255, 255, 0.08) 0%,
-    rgba(255, 255, 255, 0.02) 50%,
-    rgba(255, 255, 255, 0.05) 100%
+    rgba(99, 102, 241, 0.1),
+    rgba(139, 92, 246, 0.1)
   );
-  border-radius: 20px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
   opacity: 0;
   transition: opacity 0.3s ease;
   z-index: -1;
 }
 
-.card:hover::before {
+[data-mantine-color-scheme="dark"] .volumeCard:hover::before {
   opacity: 1;
 }
 
-.card:hover {
+[data-mantine-color-scheme="dark"] .volumeCard:hover {
+  transform: translateY(-4px);
+  border-color: rgba(99, 102, 241, 0.3);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+}
+
+.volumeCard:focus {
+  outline: 2px solid #6366f1;
+  outline-offset: 2px;
   transform: translateY(-2px);
+  border-color: rgba(99, 102, 241, 0.4);
+  box-shadow: 0 15px 30px rgba(99, 102, 241, 0.2);
 }
 
-.appName {
-  font-size: 1.2rem;
-  font-weight: 600;
-  margin: 0 0 1.5rem 0;
-  text-align: center;
-  width: 100%;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  color: var(--text-strong, inherit);
-  position: relative;
-  letter-spacing: 0.5px;
+.volumeCard:focus-visible {
+  outline: 2px solid #6366f1;
+  outline-offset: 2px;
 }
 
-.appName::after {
-  content: "";
-  position: absolute;
-  bottom: -8px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 30px;
-  height: 2px;
-  background: linear-gradient(
-    90deg,
-    transparent,
-    var(--mantine-color-blue-5),
-    transparent
-  );
-  border-radius: 1px;
+/* Light theme volume cards */
+[data-mantine-color-scheme="light"] .volumeCard {
+  background: rgba(255, 255, 255, 0.8);
+  border: 1px solid rgba(0, 0, 0, 0.1);
 }
 
-.appSlider {
-  width: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 1rem;
-  margin: 1rem 0 1.5rem;
-  padding: 1rem;
-  background: rgba(255, 255, 255, 0.03);
-  border-radius: 16px;
-  border: 1px solid rgba(255, 255, 255, 0.05);
-  transition: all 0.3s ease;
-}
-
-.appSlider:hover {
-  background: rgba(255, 255, 255, 0.05);
-  border-color: rgba(255, 255, 255, 0.1);
-  transform: scale(1.02);
-}
-
-.volumeSlider {
-  display: flex;
-  width: 100%;
-  height: 40px;
-  align-items: center;
-  border-radius: 1rem;
-}
-
-.volumeText {
-  display: flex;
-  margin: 0;
-  justify-content: center;
-  font-size: 1.3rem;
-  font-weight: 700;
-  color: var(--text-strong, inherit);
-  position: relative;
-  padding: 0.5rem 1rem;
-  background: rgba(255, 255, 255, 0.05);
-  border-radius: 12px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  transition: all 0.3s ease;
-}
-
-.volumeText:hover {
-  background: rgba(255, 255, 255, 0.08);
-  border-color: rgba(255, 255, 255, 0.15);
-  transform: scale(1.05);
-}
-
-.volumeButton {
-  border-radius: 12px;
-  padding: 0.6rem 0.8rem;
-  background: linear-gradient(
-    135deg,
-    rgba(255, 255, 255, 0.08),
-    rgba(255, 255, 255, 0.04)
-  );
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  color: inherit;
-  cursor: pointer;
-  font-weight: 600;
-  font-size: 0.9rem;
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-  position: relative;
-  overflow: hidden;
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-}
-
-.volumeButton::before {
+[data-mantine-color-scheme="light"] .volumeCard::before {
   content: "";
   position: absolute;
   top: 0;
-  left: -100%;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(
-    90deg,
-    transparent,
-    rgba(255, 255, 255, 0.1),
-    transparent
-  );
-  transition: left 0.5s ease;
-}
-
-.volumeButton:hover::before {
-  left: 100%;
-}
-
-.volumeButton:hover {
+  left: 0;
+  right: 0;
+  bottom: 0;
   background: linear-gradient(
     135deg,
-    rgba(255, 255, 255, 0.12),
-    rgba(255, 255, 255, 0.08)
+    rgba(99, 102, 241, 0.05),
+    rgba(139, 92, 246, 0.05)
   );
-  border-color: rgba(255, 255, 255, 0.2);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  z-index: -1;
+}
+
+[data-mantine-color-scheme="light"] .volumeCard:hover::before {
+  opacity: 1;
+}
+
+[data-mantine-color-scheme="light"] .volumeCard:hover {
+  transform: translateY(-4px);
+  border-color: rgba(99, 102, 241, 0.2);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+}
+
+[data-mantine-color-scheme="light"] .volumeCard:focus {
+  outline: 2px solid #6366f1;
+  outline-offset: 2px;
+  transform: translateY(-2px);
+  border-color: rgba(99, 102, 241, 0.3);
+  box-shadow: 0 15px 30px rgba(99, 102, 241, 0.15);
+}
+
+/* Card header */
+.cardHeader {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+}
+
+.appIcon {
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(99, 102, 241, 0.2);
+  border-radius: 12px;
+  border: 1px solid rgba(99, 102, 241, 0.3);
+  color: #6366f1;
+  transition: all 0.3s ease;
+}
+
+.appIcon:hover {
+  background: rgba(99, 102, 241, 0.3);
+  border-color: rgba(99, 102, 241, 0.5);
+  transform: scale(1.05);
+}
+
+.appIcon svg {
+  width: 24px;
+  height: 24px;
+  transition: all 0.3s ease;
+}
+
+/* Dark theme app icon */
+[data-mantine-color-scheme="dark"] .appIcon {
+  background: rgba(99, 102, 241, 0.2);
+  border-color: rgba(99, 102, 241, 0.3);
+  color: #6366f1;
+}
+
+[data-mantine-color-scheme="dark"] .appIcon:hover {
+  background: rgba(99, 102, 241, 0.3);
+  border-color: rgba(99, 102, 241, 0.5);
+}
+
+/* Light theme app icon */
+[data-mantine-color-scheme="light"] .appIcon {
+  background: rgba(99, 102, 241, 0.15);
+  border-color: rgba(99, 102, 241, 0.25);
+  color: #6366f1;
+}
+
+[data-mantine-color-scheme="light"] .appIcon:hover {
+  background: rgba(99, 102, 241, 0.25);
+  border-color: rgba(99, 102, 241, 0.4);
+}
+
+.appTitle {
+  font-size: 1.1rem;
+  font-weight: 600;
+  flex: 1;
+}
+
+/* Dark theme app title */
+[data-mantine-color-scheme="dark"] .appTitle {
+  color: rgba(255, 255, 255, 0.9);
+}
+
+/* Light theme app title */
+[data-mantine-color-scheme="light"] .appTitle {
+  color: rgba(17, 17, 17, 0.9);
+}
+
+/* Slider container */
+.sliderContainer {
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+
+.sliderLabel {
+  font-size: 0.85rem;
+  font-weight: 500;
+  min-width: 20px;
+  text-align: center;
+  margin-inline: 10px;
+}
+
+/* Dark theme slider labels */
+[data-mantine-color-scheme="dark"] .sliderLabel {
+  color: rgba(255, 255, 255, 0.6);
+}
+
+/* Light theme slider labels */
+[data-mantine-color-scheme="light"] .sliderLabel {
+  color: rgba(17, 17, 17, 0.6);
+}
+
+/* Current volume display */
+.currentVolume {
+  font-size: 2.5rem;
+  font-weight: 700;
+  text-align: center;
+  margin: 1rem 0 1.5rem 0;
+  background: transparent;
+  border: none;
+  padding: 0;
+}
+
+/* Dark theme volume display */
+[data-mantine-color-scheme="dark"] .currentVolume {
+  color: rgba(255, 255, 255, 0.95);
+}
+
+/* Light theme volume display */
+[data-mantine-color-scheme="light"] .currentVolume {
+  color: rgba(17, 17, 17, 0.95);
+}
+
+.volumeSlider {
+  width: 100%;
+}
+
+/* Control buttons */
+.controlButtons {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin-top: 1rem;
+}
+
+.controlButton {
+  transition: all 0.2s ease;
+  backdrop-filter: blur(10px);
+  min-width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
+/* Dark theme control buttons */
+[data-mantine-color-scheme="dark"] .controlButton {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: rgba(255, 255, 255, 0.8);
+}
+
+[data-mantine-color-scheme="dark"] .controlButton:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.25);
+  color: rgba(255, 255, 255, 0.95);
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
-.volumeButton:active {
-  transform: translateY(0) scale(0.98);
+/* Light theme control buttons */
+[data-mantine-color-scheme="light"] .controlButton {
+  background: rgba(0, 0, 0, 0.05);
+  border: 1px solid rgba(0, 0, 0, 0.15);
+  color: rgba(17, 17, 17, 0.8);
 }
 
-/* Mobile tweaks */
+[data-mantine-color-scheme="light"] .controlButton:hover {
+  background: rgba(0, 0, 0, 0.1);
+  border-color: rgba(0, 0, 0, 0.25);
+  color: rgba(17, 17, 17, 0.95);
+  transform: translateY(-1px);
+}
+
+/* Loading and error states */
+.loadingBox,
+.errorBox {
+  text-align: center;
+  padding: 3rem 0;
+  border-radius: 16px;
+  backdrop-filter: blur(20px);
+}
+
+/* Dark theme loading/error boxes */
+[data-mantine-color-scheme="dark"] .loadingBox,
+[data-mantine-color-scheme="dark"] .errorBox {
+  background: rgba(30, 31, 41, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Light theme loading/error boxes */
+[data-mantine-color-scheme="light"] .loadingBox,
+[data-mantine-color-scheme="light"] .errorBox {
+  background: rgba(255, 255, 255, 0.8);
+  border: 1px solid rgba(0, 0, 0, 0.1);
+}
+
 @media (max-width: 768px) {
-  .card {
-    padding: 1rem 0.75rem;
+  .volumeCard {
+    padding: 1rem;
   }
 
-  .appName {
-    font-size: 1.1rem;
+  .cardHeader {
     margin-bottom: 1rem;
   }
 
-  .appSlider {
-    padding: 0.75rem;
-    gap: 0.75rem;
+  .appIcon {
+    width: 32px;
+    height: 32px;
+    font-size: 1.25rem;
   }
 
-  .volumeSlider {
-    height: 48px;
-    min-width: 200px;
-  }
-
-  .volumeButton {
-    padding: 1rem 1rem;
+  .appTitle {
     font-size: 1rem;
   }
 
-  .volumeText {
-    font-size: 1.1rem;
-    padding: 0.4rem 0.8rem;
+  /* Display current volume at right position of volume slider */
+  .currentVolume {
+    font-size: 1rem;
+    margin: 0;
+    padding: 0;
   }
+
+  .controlButtons {
+    gap: 0.25rem;
+    display: flex;
+
+    .controlButton {
+      padding-block: 1.8rem;
+      padding-inline: 1.8rem;
+      font-size: 30px;
+
+      @media (max-width: 425px) {
+        padding-block: 1.8rem;
+        flex: 1;
+        font-size: 30px;
+      }
+    }
+  }
+}
+
+/* Accessibility: Enhanced focus indicators */
+.controlButton:focus-visible {
+  outline: 2px solid var(--mantine-color-blue-5);
+  outline-offset: 1px;
+}
+
+/* Accessibility: Screen reader only */
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
 }

@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import WebSocketService, { type WebSocketStatus } from '../services/websocket';
+import WebSocketService from '../services/websocket';
+import type { WebSocketStatus, WebSocketMessage } from '@/types';
 
 interface UseWebSocketProps {
   onVolumeChange: (data: { appName: string; volume: number; action?: 'update' | 'add' | 'remove' }) => void;
@@ -24,29 +25,30 @@ export const useWebSocket = ({ onVolumeChange, apiUrl }: UseWebSocketProps) => {
     );
 
     // Set up message handler
-    const removeMessageHandler = wsService.current.addMessageHandler((data: any) => {
+    const removeMessageHandler = wsService.current.addMessageHandler((data: WebSocketMessage) => {
       switch (data.type) {
         case 'volume_changed':
           onVolumeChange({
-            appName: data.app_name,
-            volume: data.volume,
+            appName: data.app_name || '',
+            volume: data.volume || 0,
             action: 'update'
           });
           break;
         case 'app_added':
           onVolumeChange({
-            appName: data.app_name,
+            appName: data.app_name || '',
             volume: data.volume || 0,
             action: 'add'
           });
           break;
         case 'app_removed':
           onVolumeChange({
-            appName: data.app_name,
+            appName: data.app_name || '',
             volume: 0,
             action: 'remove'
           });
           break;
+        // ping/pong are handled internally by WebSocketService
       }
     });
 

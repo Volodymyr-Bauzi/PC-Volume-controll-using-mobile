@@ -149,7 +149,33 @@ We provide pre-built packages for easy installation. Please visit our [Releases 
 | `WS_PORT` | WebSocket port | `3001` |
 | `LOG_LEVEL` | Logging level | `debug` (dev) / `info` (prod) |
 
+## ⚙️ Environment Configuration
+
+### Frontend Environment Variables
+
+The frontend uses Vite and requires `VITE_*` prefixed environment variables. For detailed configuration:
+
+1. **See** [`frontend/.env.example`](file:///d:/Programming/pc-mobile/volume-controll/volume-control-02/frontend/.env.example) for all available variables
+2. **Read** the [Frontend README Configuration section](file:///d:/Programming/pc-mobile/volume-controll/volume-control-02/frontend/README.md#configuration) for detailed documentation
+
+**Quick Setup for Development:**
+```bash
+cd frontend
+cp .env.example .env.local
+# Edit .env.local with your custom values
+```
+
+**Key Variables:**
+- `VITE_API_HOST` - Backend host (default: `localhost`)
+- `VITE_API_PORT` - Backend port (default: `8777`)
+- `VITE_PORT` - Dev server port (default: `3000`)
+
+### Backend Environment Variables
+
+Backend environment variables are typically configured at the system level or via `.env` files in the backend directory. See the backend documentation for details.
+
 ## 🔧 Troubleshooting
+
 
 ### Common Issues
 

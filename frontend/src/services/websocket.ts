@@ -1,5 +1,11 @@
-type WebSocketStatus = 'connected' | 'connecting' | 'disconnected' | 'error';
-type WebSocketMessageHandler = (data: any) => void;
+import type {
+  WebSocketStatus,
+  WebSocketMessage,
+  ConnectionMetrics,
+} from '@/types';
+import { WEBSOCKET_CONFIG } from '@/constants';
+
+type WebSocketMessageHandler = (data: WebSocketMessage) => void;
 type StatusChangeHandler = (status: WebSocketStatus, message?: string) => void;
 
 class WebSocketService {
@@ -7,10 +13,19 @@ class WebSocketService {
   private messageHandlers: Set<WebSocketMessageHandler> = new Set();
   private statusChangeHandlers: Set<StatusChangeHandler> = new Set();
   private reconnectAttempts = 0;
-  private maxReconnectAttempts = 5;
   private reconnectTimeout: number | null = null;
+  private heartbeatInterval: number | null = null;
+  private heartbeatTimeout: number | null = null;
   private isManuallyClosed = false;
   private url: string;
+  private connectedAt: number | null = null;
+
+  // Connection metrics
+  private metrics: ConnectionMetrics = {
+    totalConnections: 0,
+    totalReconnections: 0,
+    currentConnectionDuration: 0,
+  };
 
   constructor(baseUrl: string) {
     this.url = this.normalizeUrl(baseUrl);
@@ -85,21 +100,44 @@ class WebSocketService {
 
     this.socket.onopen = () => {
       this.reconnectAttempts = 0;
+      this.connectedAt = Date.now();
+      this.metrics.totalConnections++;
+      if (this.metrics.totalConnections > 1) {
+        this.metrics.totalReconnections++;
+      }
+      this.metrics.lastSuccessfulConnection = Date.now();
+      
       this.updateStatus('connected');
+      this.startHeartbeat();
     };
 
     this.socket.onmessage = (event) => {
       try {
-        const data = JSON.parse(event.data);
+        const data: WebSocketMessage = JSON.parse(event.data);
+        
+        // Handle pong response
+        if (data.type === 'pong') {
+          this.handlePong();
+          return;
+        }
+        
         this.notifyMessageHandlers(data);
       } catch (error) {
         console.error('Error processing WebSocket message:', error);
       }
     };
 
-    this.socket.onclose = () => {
+    this.socket.onclose = (event) => {
+      this.stopHeartbeat();
+      
+      if (this.connectedAt) {
+        const duration = Date.now() - this.connectedAt;
+        this.metrics.currentConnectionDuration = duration;
+        this.metrics.lastDisconnection = Date.now();
+      }
+      
       if (!this.isManuallyClosed) {
-        this.handleConnectionError('Connection closed');
+        this.handleConnectionError(`Connection closed (code: ${event.code})`);
         this.attemptReconnect();
       } else {
         this.updateStatus('disconnected');
@@ -114,6 +152,41 @@ class WebSocketService {
     };
   }
 
+  private startHeartbeat(): void {
+    this.stopHeartbeat();
+    
+    this.heartbeatInterval = window.setInterval(() => {
+      if (this.socket?.readyState === WebSocket.OPEN) {
+        this.sendMessage({ type: 'ping', timestamp: Date.now() });
+        
+        // Set timeout for pong response
+        this.heartbeatTimeout = window.setTimeout(() => {
+          console.warn('Heartbeat timeout - no pong received');
+          this.handleConnectionError('Heartbeat timeout');
+          this.socket?.close();
+        }, WEBSOCKET_CONFIG.HEARTBEAT_TIMEOUT_MS);
+      }
+    }, WEBSOCKET_CONFIG.HEARTBEAT_INTERVAL_MS);
+  }
+
+  private stopHeartbeat(): void {
+    if (this.heartbeatInterval !== null) {
+      clearInterval(this.heartbeatInterval);
+      this.heartbeatInterval = null;
+    }
+    if (this.heartbeatTimeout !== null) {
+      clearTimeout(this.heartbeatTimeout);
+      this.heartbeatTimeout = null;
+    }
+  }
+
+  private handlePong(): void {
+    if (this.heartbeatTimeout !== null) {
+      clearTimeout(this.heartbeatTimeout);
+      this.heartbeatTimeout = null;
+    }
+  }
+
   private handleConnectionError(message: string): void {
     console.error(message);
     this.updateStatus('error', message);
@@ -121,17 +194,33 @@ class WebSocketService {
   }
 
   private attemptReconnect(): void {
-    if (this.reconnectAttempts >= this.maxReconnectAttempts) {
-      this.updateStatus('error', 'Max reconnection attempts reached');
+    if (this.reconnectAttempts >= WEBSOCKET_CONFIG.MAX_RECONNECT_ATTEMPTS) {
+      this.updateStatus(
+        'max_retries_exceeded',
+        'Max reconnection attempts reached'
+      );
       return;
     }
 
     this.reconnectAttempts++;
-    const delay = Math.min(1000 * Math.pow(2, this.reconnectAttempts), 30000);
+    
+    // Calculate delay with exponential backoff and jitter
+    const baseDelay = Math.min(
+      WEBSOCKET_CONFIG.INITIAL_RECONNECT_DELAY_MS *
+        Math.pow(
+          WEBSOCKET_CONFIG.RECONNECT_DELAY_MULTIPLIER,
+          this.reconnectAttempts - 1
+        ),
+      WEBSOCKET_CONFIG.MAX_RECONNECT_DELAY_MS
+    );
+    
+    // Add random jitter (0 to JITTER_FACTOR * baseDelay)
+    const jitter = Math.random() * WEBSOCKET_CONFIG.JITTER_FACTOR * baseDelay;
+    const delay = baseDelay + jitter;
 
     this.updateStatus(
-      'connecting',
-      `Reconnecting (${this.reconnectAttempts}/${this.maxReconnectAttempts})...`
+      'reconnecting',
+      `Reconnecting in ${Math.round(delay / 1000)}s (attempt ${this.reconnectAttempts}/${WEBSOCKET_CONFIG.MAX_RECONNECT_ATTEMPTS})...`
     );
 
     this.reconnectTimeout = window.setTimeout(() => {
@@ -140,6 +229,8 @@ class WebSocketService {
   }
 
   private cleanup(): void {
+    this.stopHeartbeat();
+    
     if (this.socket) {
       this.socket.onopen = null;
       this.socket.onmessage = null;
@@ -163,7 +254,7 @@ class WebSocketService {
     this.statusChangeHandlers.forEach((handler) => handler(status, message));
   }
 
-  private notifyMessageHandlers(data: any): void {
+  private notifyMessageHandlers(data: WebSocketMessage): void {
     this.messageHandlers.forEach((handler) => {
       try {
         handler(data);
@@ -184,7 +275,7 @@ class WebSocketService {
     return () => this.statusChangeHandlers.delete(handler);
   }
 
-  sendMessage(data: any): void {
+  sendMessage(data: WebSocketMessage | Record<string, unknown>): void {
     if (this.socket && this.socket.readyState === WebSocket.OPEN) {
       try {
         const message = typeof data === 'string' ? data : JSON.stringify(data);
@@ -211,7 +302,15 @@ class WebSocketService {
         return 'disconnected';
     }
   }
+
+  getMetrics(): ConnectionMetrics {
+    return { ...this.metrics };
+  }
+
+  resetReconnectAttempts(): void {
+    this.reconnectAttempts = 0;
+  }
 }
 
 export default WebSocketService;
-export type {WebSocketStatus, WebSocketMessageHandler, StatusChangeHandler};
+export type { WebSocketMessageHandler, StatusChangeHandler };
