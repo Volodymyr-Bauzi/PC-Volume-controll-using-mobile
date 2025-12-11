@@ -50,12 +50,10 @@ export const useVolumeControl = (initialApplications: Application[] = []) => {
       setError(null);
 
       let apps = await api.getApplications(controller.signal);
-      console.log("apps: ", apps);
-      // ! remove duplicate objects with same names
+      // Remove duplicate objects with same names
       apps = apps.filter(
         (app, index) => apps.findIndex((a) => a.name === app.name) === index
       );
-      console.log("apps: ", apps);
       setApplications(apps);
       return apps;
     } catch (err) {

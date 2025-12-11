@@ -38,9 +38,11 @@ const getWebSocketUrl = () => {
 const API_BASE_URL = getApiBaseUrl();
 const WS_BASE_URL = getWebSocketUrl();
 
-console.log('Environment:', IS_DEVELOPMENT ? 'Development' : 'Production');
-console.log('API Base URL:', API_BASE_URL);
-console.log('WebSocket URL:', WS_BASE_URL);
+// Log configuration only in development
+if (IS_DEVELOPMENT) {
+  console.log('API Base URL:', API_BASE_URL);
+  console.log('WebSocket URL:', WS_BASE_URL);
+}
 
 
 const api = {
@@ -52,7 +54,10 @@ const api = {
       });
       return response.data;
     } catch (error) {
-      console.error("Error fetching system volume:", error);
+      // Only log non-canceled errors
+      if (!isCancelError(error)) {
+        console.error('Error fetching system volume:', getErrorMessage(error));
+      }
       throw error;
     }
   },
@@ -91,7 +96,9 @@ const api = {
       );
       return response.data;
     } catch (error) {
-      console.error("Error toggling system mute:", error);
+      if (!isCancelError(error)) {
+        console.error('Error toggling system mute:', getErrorMessage(error));
+      }
       throw error;
     }
   },
@@ -104,7 +111,9 @@ const api = {
       });
       return response.data;
     } catch (error) {
-      console.error("Error fetching mute status:", error);
+      if (!isCancelError(error)) {
+        console.error('Error fetching mute status:', getErrorMessage(error));
+      }
       throw error;
     }
   },

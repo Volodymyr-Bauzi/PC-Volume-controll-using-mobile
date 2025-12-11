@@ -5,15 +5,8 @@
   font-family: "Inter", -apple-system, BlinkMacSystemFont, sans-serif;
 }
 
-/* Dark theme app container */
-[data-mantine-color-scheme="dark"] .appContainer {
-  background: linear-gradient(135deg, #1a1b23 0%, #2d2e36 100%);
-}
+/* Note: Background gradients are defined in global.css for theme consistency */
 
-/* Light theme app container */
-[data-mantine-color-scheme="light"] .appContainer {
-  background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
-}
 
 /* Header section */
 .header {

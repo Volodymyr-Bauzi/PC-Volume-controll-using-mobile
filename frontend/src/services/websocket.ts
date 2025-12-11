@@ -85,7 +85,10 @@ class WebSocketService {
       this.socket = new WebSocket(this.url);
       this.setupEventHandlers();
     } catch (error) {
-      console.error('WebSocket connection error:', error);
+      // Only log in development
+      if (import.meta.env.DEV) {
+        console.warn('WebSocket connection failed:', error);
+      }
       this.handleConnectionError('Connection failed');
     }
   }
@@ -144,11 +147,8 @@ class WebSocketService {
       }
     };
 
-    this.socket.onerror = (error) => {
-      console.error('WebSocket error:', error);
-      if (!this.isManuallyClosed) {
-        this.handleConnectionError('Connection error');
-      }
+    this.socket.onerror = () => {
+      // Silently handle errors - they're managed through onclose and reconnection
     };
   }
 
@@ -188,7 +188,7 @@ class WebSocketService {
   }
 
   private handleConnectionError(message: string): void {
-    console.error(message);
+    // Silently handle connection errors - user sees status in UI
     this.updateStatus('error', message);
     this.cleanup();
   }

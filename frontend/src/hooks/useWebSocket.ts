@@ -12,8 +12,18 @@ export const useWebSocket = ({ onVolumeChange, apiUrl }: UseWebSocketProps) => {
   const [statusMessage, setStatusMessage] = useState<string>('');
   const wsService = useRef<WebSocketService | null>(null);
 
+  // Check if WebSocket is disabled via environment variable
+  const isWebSocketDisabled = import.meta.env.VITE_DISABLE_WEBSOCKET === 'true';
+
   // Initialize WebSocket service
   useEffect(() => {
+    // Skip WebSocket initialization if disabled
+    if (isWebSocketDisabled) {
+      setStatus('disconnected');
+      setStatusMessage('WebSocket disabled');
+      return;
+    }
+
     wsService.current = new WebSocketService(apiUrl);
     
     // Set up status change handler
@@ -61,21 +71,29 @@ export const useWebSocket = ({ onVolumeChange, apiUrl }: UseWebSocketProps) => {
       removeMessageHandler();
       wsService.current?.disconnect();
     };
-  }, [apiUrl, onVolumeChange]);
+  }, [apiUrl, onVolumeChange, isWebSocketDisabled]);
 
   // Reconnect function
   const reconnect = useCallback(() => {
+    if (isWebSocketDisabled) {
+      console.warn('WebSocket is disabled via VITE_DISABLE_WEBSOCKET');
+      return;
+    }
     if (wsService.current) {
       wsService.current.connect();
     }
-  }, []);
+  }, [isWebSocketDisabled]);
 
   // Send message function
-  const sendMessage = useCallback((data: any) => {
+  const sendMessage = useCallback((data: WebSocketMessage | Record<string, unknown>) => {
+    if (isWebSocketDisabled) {
+      console.warn('WebSocket is disabled via VITE_DISABLE_WEBSOCKET');
+      return;
+    }
     if (wsService.current) {
       wsService.current.sendMessage(data);
     }
-  }, []);
+  }, [isWebSocketDisabled]);
 
   return {
     status,
