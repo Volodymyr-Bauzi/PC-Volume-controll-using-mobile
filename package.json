@@ -18,8 +18,9 @@
     "package": "node package-app.js",
     "package:win": "node package-app.js win",
     "package:linux": "node package-app.js linux",
+    "package:mac": "node package-app.js mac",
     "release": "standard-version",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "node --test tests/"
   },
   "keywords": [
     "volume",

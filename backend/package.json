@@ -13,7 +13,8 @@
     ],
     "targets": [
       "node18-win-x64",
-      "node18-linux-x64"
+      "node18-linux-x64",
+      "node18-macos-x64"
     ],
     "outputPath": "dist"
   },
@@ -21,8 +22,10 @@
     "clean": "rimraf build dist",
     "build:cpp:win": "node-gyp rebuild --platform=win32",
     "build:cpp:linux": "node-gyp rebuild --platform=linux",
+    "build:cpp:mac": "node-gyp rebuild --platform=darwin",
     "build:cpp": "node scripts/build-platform.js",
     "build:ts": "tsc",
+    "type-check": "tsc --noEmit",
     "build": "npm run clean && npm run build:cpp && npm run build:ts",
     "rebuild": "npm run clean && npm install && npm run build",
     "start": "node dist/server.js",
