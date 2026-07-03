@@ -14,9 +14,9 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [windows-latest, ubuntu-latest]
+        os: [windows-2022, ubuntu-latest]
         include:
-          - os: windows-latest
+          - os: windows-2022
             artifact: windows
             build_cmd: npm run package:win
             dist_dir: win
@@ -63,7 +63,7 @@ jobs:
           ls -la dist/${{ matrix.dist_dir }} || echo "Directory not found"
           
       - name: List files in dist directory (Windows)
-        if: matrix.os == 'windows-latest'
+        if: matrix.os == 'windows-2022'
         run: |
           echo "--- Contents of dist/ ---"
           Get-ChildItem -Path dist -Force
@@ -81,13 +81,13 @@ jobs:
           node package-release.js
           
       - name: Create release directory and package release (Windows)
-        if: matrix.os == 'windows-latest'
+        if: matrix.os == 'windows-2022'
         run: |
           New-Item -ItemType Directory -Force -Path release | Out-Null
           node package-release.js
 
       - name: Rename release files for Windows
-        if: matrix.os == 'windows-latest'
+        if: matrix.os == 'windows-2022'
         run: |
           $version = (Get-Content package.json | ConvertFrom-Json).version
           $url = "https://github.com/${{ github.repository }}/releases/download/v$version/volume-control-windows-v$version.zip"
@@ -127,7 +127,7 @@ jobs:
           fi
 
       - name: Upload artifacts (Windows)
-        if: matrix.os == 'windows-latest'
+        if: matrix.os == 'windows-2022'
         uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.artifact }}
