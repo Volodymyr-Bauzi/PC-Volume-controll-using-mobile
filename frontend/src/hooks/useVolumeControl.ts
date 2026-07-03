@@ -23,21 +23,20 @@ export const useVolumeControl = (initialApplications: Application[] = []) => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const volumeRequestControllers = useRef<Record<string, AbortController>>({});
-  const updateTimeoutRef = useRef<Record<string, NodeJS.Timeout>>({});
+  const updateTimeoutRef = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
   const lastRequestedVolumeRef = useRef<Record<string, number>>({});
   const { saveVolume, getVolume } = usePreviousVolume();
 
   // Clean up on unmount
   useEffect(() => {
+    // Copy ref contents so the cleanup uses the values from mount time
+    const timeouts = updateTimeoutRef.current;
+    const controllers = volumeRequestControllers.current;
     return () => {
       // Clear all timeouts
-      Object.values(updateTimeoutRef.current).forEach((timeout) =>
-        clearTimeout(timeout as any)
-      );
+      Object.values(timeouts).forEach((timeout) => clearTimeout(timeout));
       // Abort all pending requests
-      Object.values(volumeRequestControllers.current).forEach((controller) =>
-        controller.abort()
-      );
+      Object.values(controllers).forEach((controller) => controller.abort());
     };
   }, []);
 

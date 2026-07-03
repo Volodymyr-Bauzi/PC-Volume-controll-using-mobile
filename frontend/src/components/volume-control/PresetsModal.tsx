@@ -13,8 +13,14 @@ interface PresetsModalProps {
 
 
 
+interface PresetApp {
+  name: string;
+  volume: number;
+  isMuted: boolean;
+}
+
 export function PresetsModal({ opened, onClose, apiUrl, currentApps }: PresetsModalProps) {
-  const [presets, setPresets] = useState<Record<string, any>>({});
+  const [presets, setPresets] = useState<Record<string, PresetApp[]>>({});
   const [newPresetName, setNewPresetName] = useState('');
 
   const fetchPresets = async () => {
