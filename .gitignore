@@ -167,3 +167,6 @@ yarn-error.log*
 *.sln
 *.sw?
 git_tagging_examples.txt
+
+# Runtime data (saved volume presets)
+backend/presets.json
