@@ -8,11 +8,7 @@ const usePreviousVolume = () => {
     prevVolumesRef.current["system"] = volume;
   }, []);
 
-  const getVolume = useCallback(() => {
-    return prevVolumesRef.current["system"] ?? 50; // Default to 50 if no previous volume
-  }, []);
-
-  return { saveVolume, getVolume };
+  return { saveVolume };
 };
 
 export const useSystemVolume = () => {
@@ -22,7 +18,7 @@ export const useSystemVolume = () => {
   const [error, setError] = useState<string | null>(null);
   const volumeRequestController = useRef<AbortController | null>(null);
   const isMounted = useRef(true);
-  const { saveVolume, getVolume } = usePreviousVolume();
+  const { saveVolume } = usePreviousVolume();
 
   const fetchSystemVolume = useCallback(async () => {
     if (volumeRequestController.current) {

@@ -7,7 +7,8 @@ import { useWebSocket } from './hooks/useWebSocket';
 import { ThemeToggle } from './components/common/ThemeToggle/ThemeToggle';
 import { useSystemVolume } from './hooks/useSystemVolume';
 import styles from './VolumeControlApp.module.css';
-import { ApplicationCard } from './components/volume-control';
+import { ApplicationCard, MediaControls, PresetsModal, AppLauncherModal } from './components/volume-control';
+import { IconList, IconRocket } from '@tabler/icons-react';
 import { SCROLL_CONFIG, VOLUME_CONSTRAINTS, API_CONFIG } from '@/constants';
 import { clamp, calculateVolumeIncrement } from '@/utils';
 
@@ -28,6 +29,10 @@ export function VolumeControlApp() {
 
   // Hover state for wheel control
   const [hoveredCard, setHoveredCard] = useState<string | null>(null);
+
+  // Modal states
+  const [presetsOpen, setPresetsOpen] = useState(false);
+  const [launcherOpen, setLauncherOpen] = useState(false);
 
   const {
     applications,
@@ -157,16 +162,47 @@ export function VolumeControlApp() {
   return (
     <div className={styles.appContainer}>
       <div className={styles.header}>
-        <Title order={1} className={styles.title}>
-          Volume Control Center
-        </Title>
-        <Text className={styles.subtitle}>
-          Manage audio levels for all your applications
-        </Text>
-        <div className={styles.themeToggle}>
-          <ThemeToggle />
+        <div style={{ flex: 1 }}>
+          <Title order={1} className={styles.title}>
+            Volume Control Center
+          </Title>
+          <Text className={styles.subtitle}>
+            Manage audio levels for all your applications
+          </Text>
+        </div>
+        <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+          <Button 
+            variant="light" 
+            leftSection={<IconList size={16} />}
+            onClick={() => setPresetsOpen(true)}
+          >
+            Presets
+          </Button>
+          <Button 
+            variant="light" 
+            leftSection={<IconRocket size={16} />}
+            onClick={() => setLauncherOpen(true)}
+          >
+            Apps
+          </Button>
+          <div className={styles.themeToggle}>
+            <ThemeToggle />
+          </div>
         </div>
       </div>
+
+      <PresetsModal 
+        opened={presetsOpen} 
+        onClose={() => setPresetsOpen(false)} 
+        apiUrl={apiUrl}
+        currentApps={applications}
+      />
+
+      <AppLauncherModal
+        opened={launcherOpen}
+        onClose={() => setLauncherOpen(false)}
+        apiUrl={apiUrl}
+      />
 
       <div className={styles.content}>
         {isLoading ? (
@@ -190,7 +226,9 @@ export function VolumeControlApp() {
             </Button>
           </Box>
         ) : (
-          <div className={styles.volumeGrid}>
+          <>
+            <MediaControls apiUrl={apiUrl} />
+            <div className={styles.volumeGrid}>
             {/* Master Volume Card */}
             <ApplicationCard
               app={{
@@ -224,6 +262,7 @@ export function VolumeControlApp() {
               );
             })}
           </div>
+          </>
         )}
       </div>
     </div>

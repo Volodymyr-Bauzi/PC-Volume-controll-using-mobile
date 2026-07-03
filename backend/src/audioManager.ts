@@ -1,14 +1,12 @@
 import { AudioApplication } from './types';
 import { AudioControlFactory } from './platforms/audio-control-factory';
 import { IAudioControl } from './platforms/audio-control.interface';
-const audioControl: IAudioControl = AudioControlFactory.createAudioControl();
-
 export class AudioManager {
   private static instance: AudioManager;
   private audioControl: IAudioControl;
 
   private constructor() {
-    this.audioControl = audioControl;
+    this.audioControl = AudioControlFactory.createAudioControl();
   }
 
   static getInstance(): AudioManager {
@@ -43,7 +41,7 @@ export class AudioManager {
    * @returns Array of audio applications with their current volume state
    */
   static getApplications(): AudioApplication[] {
-    return audioControl.getApplications();
+    return this.getInstance().audioControl.getApplications();
   }
 
   /**
@@ -52,7 +50,7 @@ export class AudioManager {
    * @returns Current volume (0-100) or null if not found
    */
   static getVolume(identifier: string | number): number | null {
-    return audioControl.getVolume(identifier);
+    return this.getInstance().audioControl.getVolume(identifier);
   }
 
   /**
@@ -62,7 +60,7 @@ export class AudioManager {
    * @returns True if volume was set successfully, false otherwise
    */
   static setVolume(identifier: string | number, volume: number): boolean {
-    return audioControl.setVolume(identifier, volume);
+    return this.getInstance().audioControl.setVolume(identifier, volume);
   }
 
   /**
@@ -72,6 +70,6 @@ export class AudioManager {
    * @returns True if mute state was set successfully, false otherwise
    */
   static muteApplication(identifier: string | number, mute: boolean): boolean {
-    return audioControl.muteApplication(identifier, mute);
+    return this.getInstance().audioControl.muteApplication(identifier, mute);
   }
 }
