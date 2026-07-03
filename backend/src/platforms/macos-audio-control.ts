@@ -24,11 +24,15 @@ export class MacOSAudioControl implements IAudioControl {
 
   private loadAddon(): NativeAddon {
     const possiblePaths = [
-      // Development path
+      // Unified addon name produced by backend/binding.gyp (target "addon")
+      path.resolve(__dirname, '../../../build/Release/addon.node'),
+      path.resolve(process.cwd(), 'build/Release/addon.node'),
+      path.resolve(process.cwd(), 'addon.node'),
+      // When running from packaged executable
+      path.resolve(path.dirname(process.execPath), 'addon.node'),
+      // Legacy standalone build names (src/platforms/macos/binding.gyp)
       path.resolve(__dirname, '../../../build/Release/macos-addon.node'),
-      // Production path
       path.resolve(process.cwd(), 'build/Release/macos-addon.node'),
-      // Fallback path
       path.resolve(process.cwd(), 'macos-addon.node')
     ];
 

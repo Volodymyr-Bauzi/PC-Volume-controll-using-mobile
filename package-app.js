@@ -7,8 +7,8 @@ const startTime = Date.now();
 const targetPlatform = process.argv[2]?.toLowerCase();
 const platforms = targetPlatform ? [targetPlatform] : ['win', 'linux'];
 
-// Validate platform
-const validPlatforms = ['win', 'linux'];
+// Validate platform ('mac' must be requested explicitly: node package-app.js mac)
+const validPlatforms = ['win', 'linux', 'mac'];
 for (const platform of platforms) {
     if (!validPlatforms.includes(platform)) {
         console.error(`Error: Invalid platform '${platform}'. Valid platforms are: ${validPlatforms.join(', ')}`);
@@ -92,6 +92,13 @@ async function packageApp() {
             continue;
         }
 
+        // Skip building for macOS on non-macOS platforms (native addon + pkg
+        // cannot be cross-compiled)
+        if (platform === 'mac' && process.platform !== 'darwin') {
+            console.log('Skipping macOS build - must be built on a macOS system');
+            continue;
+        }
+
         // Build backend first
         console.log('Building backend...');
         execSync('npm run build', { cwd: backendDir, stdio: 'inherit' });
@@ -128,9 +135,10 @@ async function packageApp() {
             }
         }
 
-        // Package the backend
+        // Package the backend ('mac' -> pkg target name 'macos')
+        const pkgPlatform = platform === 'mac' ? 'macos' : platform;
         console.log(`Building executable for ${platform}...`);
-        execSync(`pkg "${backendDir}" --targets node18-${platform}-x64 --output "${path.join(platformDir, `volume-control${platform === 'win' ? '.exe' : ''}`)}"`, { stdio: 'inherit' });
+        execSync(`pkg "${backendDir}" --targets node18-${pkgPlatform}-x64 --output "${path.join(platformDir, `volume-control${platform === 'win' ? '.exe' : ''}`)}"`, { stdio: 'inherit' });
 
         // For Linux, copy necessary build files
         if (platform === 'linux') {
@@ -201,6 +209,28 @@ echo http://%HOST%:%PORT%
 echo.
 echo Press any key to exit...
 pause`
+            : platform === 'mac'
+            ? `#!/bin/bash
+echo "Starting Volume Control App..."
+
+# Get local IP address (Wi-Fi first, then Ethernet)
+export HOST=$(ipconfig getifaddr en0 2>/dev/null || ipconfig getifaddr en1 2>/dev/null || echo "localhost")
+export BACKEND_PORT=8777
+
+# Make the executable runnable
+chmod +x ./volume-control
+
+# Start the server with the addon in the current directory
+./volume-control &
+sleep 2
+
+open "http://$HOST:8777"
+echo
+echo "App is running! You can now access it from your mobile device at:"
+echo "http://$HOST:8777"
+echo
+echo "Press Ctrl+C to stop the server when done"
+read -p "Press Enter to exit..."`
             : `#!/bin/bash
 echo "Starting Volume Control App..."
 
@@ -242,8 +272,8 @@ read -p "Press Enter to exit..."`;
         const startScriptPath = path.join(platformDir, platform === 'win' ? 'start.bat' : 'start.sh');
         fs.writeFileSync(startScriptPath, startScript);
 
-        // Make start script executable on Linux
-        if (platform === 'linux') {
+        // Make start script executable on Linux/macOS
+        if (platform === 'linux' || platform === 'mac') {
             fs.chmodSync(startScriptPath, '755');
         }
 
@@ -258,8 +288,10 @@ read -p "Press Enter to exit..."`;
 
 ## 💻 System Requirements
 
-${platform === 'win' 
+${platform === 'win'
     ? '- **Windows** 10/11 (64-bit) or Windows 7/8.1 (32-bit)\n- 100MB free disk space\n- Network connection for mobile access'
+    : platform === 'mac'
+    ? '- **macOS** 10.13+ (Intel; Apple Silicon via Rosetta 2)\n- 100MB free disk space\n- Network connection for mobile access\n\n> Note: on macOS only the **system (master) volume** can be controlled. Per-application volume is not possible with public macOS audio APIs.'
     : '- **Linux** (most modern distributions)\n- PulseAudio sound server\n- 100MB free disk space\n- Network connection for mobile access'}
 
 ## 🔧 Troubleshooting
@@ -282,6 +314,27 @@ ${platform === 'win'
 - For support, visit: https://github.com/Volodymyr-Bauzi/PC-Volume-controll-using-mobile`;
 
         fs.writeFileSync(path.join(platformDir, 'README.md'), readme);
+
+        // Copy shortcuts directory and presets.json if they exist
+        const shortcutsSrc = path.join(backendDir, 'shortcuts');
+        const shortcutsDest = path.join(platformDir, 'shortcuts');
+        if (fs.existsSync(shortcutsSrc)) {
+            console.log(`Copying shortcuts to ${platformDir}...`);
+            fs.cpSync(shortcutsSrc, shortcutsDest, { recursive: true });
+        } else {
+            // Create empty shortcuts directory if it doesn't exist
+            fs.mkdirSync(shortcutsDest, { recursive: true });
+        }
+
+        const presetsSrc = path.join(backendDir, 'presets.json');
+        const presetsDest = path.join(platformDir, 'presets.json');
+        if (fs.existsSync(presetsSrc)) {
+            console.log(`Copying presets.json to ${platformDir}...`);
+            fs.copyFileSync(presetsSrc, presetsDest);
+        } else {
+             // Create empty presets.json if it doesn't exist
+             fs.writeFileSync(presetsDest, '{}');
+        }
     }
 
     const endTime = Date.now();

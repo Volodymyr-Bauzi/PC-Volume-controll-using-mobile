@@ -14,6 +14,10 @@ try {
       console.log('Building for Linux...');
       execSync('npm run build:cpp:linux', { stdio: 'inherit' });
       break;
+    case 'darwin':
+      console.log('Building for macOS...');
+      execSync('npm run build:cpp:mac', { stdio: 'inherit' });
+      break;
     default:
       console.error(`Unsupported platform: ${platform}`);
       process.exit(1);

@@ -6,7 +6,10 @@ import cors, { CorsOptions } from 'cors';
 import bodyParser from 'body-parser';
 import { AudioManager } from './audioManager';
 import path from 'path';
+import fs from 'fs';
 import { networkInterfaces } from 'os';
+import { MediaController } from './mediaController';
+import { exec } from 'child_process';
 
 // Load environment variables with defaults for development
 const NODE_ENV = process.env.NODE_ENV || 'development';
@@ -295,6 +298,196 @@ app.get('/api/system/mute', (req, res) => {
   }
 });
 
+// Media Control Routes
+app.post('/api/media/:action', (req, res) => {
+  const { action } = req.params;
+  const allowedActions = ['playpause', 'next', 'prev', 'stop'];
+
+  if (!allowedActions.includes(action)) {
+    return res.status(400).json({ error: 'Invalid action' });
+  }
+
+  let method: 'PlayPause' | 'Next' | 'Prev' | 'Stop' = 'PlayPause';
+  switch (action) {
+    case 'playpause': method = 'PlayPause'; break;
+    case 'next': method = 'Next'; break;
+    case 'prev': method = 'Prev'; break;
+    case 'stop': method = 'Stop'; break;
+  }
+
+  try {
+    MediaController.getInstance().sendCommand(method);
+    res.json({ success: true });
+  } catch (error) {
+    console.error(`Error executing media action ${action}:`, error);
+    res.status(500).json({ error: 'Failed to execute media action' });
+  }
+});
+
+
+
+// --- App Launcher Routes ---
+// --- App Launcher Routes ---
+// When packaged with pkg, __dirname is inside the snapshot.
+// We want to look for shortcuts/presets relative to the executable.
+const isPkg = (process as any).pkg !== undefined;
+const BASE_DIR = isPkg ? path.dirname(process.execPath) : path.join(__dirname, '..');
+
+const SHORTCUTS_DIR = path.join(BASE_DIR, 'shortcuts');
+const PRESETS_FILE = path.join(BASE_DIR, 'presets.json');
+
+// Ensure shortcuts directory exists
+if (!fs.existsSync(SHORTCUTS_DIR)) {
+  fs.mkdirSync(SHORTCUTS_DIR, { recursive: true });
+}
+
+// Get list of shortcuts
+app.get('/api/shortcuts', (req, res) => {
+  try {
+    const files = fs.readdirSync(SHORTCUTS_DIR);
+    // Filter for common shortcut/executable types if needed, or just send all
+    const shortcuts = files.filter(file => !file.startsWith('.')); 
+    res.json(shortcuts);
+  } catch (error) {
+    console.error('Error reading shortcuts directory:', error);
+    res.status(500).json({ error: 'Failed to list shortcuts' });
+  }
+});
+
+// Launch a shortcut
+app.post('/api/shortcuts/launch', (req, res) => {
+  const { filename } = req.body;
+  if (!filename) {
+    return res.status(400).json({ error: 'Filename is required' });
+  }
+
+  const filePath = path.join(SHORTCUTS_DIR, filename);
+  
+  // Security check: prevent directory traversal
+  if (!filePath.startsWith(SHORTCUTS_DIR)) {
+    return res.status(403).json({ error: 'Invalid file path' });
+  }
+
+  if (!fs.existsSync(filePath)) {
+    return res.status(404).json({ error: 'Shortcut not found' });
+  }
+
+  // Launch the file with the platform's default opener
+  const command =
+    process.platform === 'win32'
+      ? `start "" "${filePath}"`
+      : process.platform === 'darwin'
+        ? `open "${filePath}"`
+        : `xdg-open "${filePath}"`;
+  
+  exec(command, (error) => {
+    if (error) {
+      console.error(`Error launching ${filename}:`, error);
+      return res.status(500).json({ error: 'Failed to launch application' });
+    }
+    res.json({ success: true });
+  });
+});
+
+// --- Presets Routes ---
+
+// Get all presets
+app.get('/api/presets', (req, res) => {
+  try {
+    if (!fs.existsSync(PRESETS_FILE)) {
+      return res.json({});
+    }
+    const data = fs.readFileSync(PRESETS_FILE, 'utf8');
+    res.json(JSON.parse(data));
+  } catch (error) {
+    console.error('Error reading presets:', error);
+    res.status(500).json({ error: 'Failed to get presets' });
+  }
+});
+
+// Save a preset
+app.post('/api/presets', (req, res) => {
+  try {
+    const { name, apps } = req.body;
+    if (!name || !apps) {
+      return res.status(400).json({ error: 'Name and apps data are required' });
+    }
+
+    let presets: Record<string, any> = {};
+    if (fs.existsSync(PRESETS_FILE)) {
+      presets = JSON.parse(fs.readFileSync(PRESETS_FILE, 'utf8'));
+    }
+
+    presets[name] = apps;
+    fs.writeFileSync(PRESETS_FILE, JSON.stringify(presets, null, 2));
+    
+    res.json({ success: true, presets });
+  } catch (error) {
+    console.error('Error saving preset:', error);
+    res.status(500).json({ error: 'Failed to save preset' });
+  }
+});
+
+// Apply a preset
+app.post('/api/presets/apply/:name', (req, res) => {
+  try {
+    const { name } = req.params;
+    if (!fs.existsSync(PRESETS_FILE)) {
+      return res.status(404).json({ error: 'No presets found' });
+    }
+
+    const presets = JSON.parse(fs.readFileSync(PRESETS_FILE, 'utf8'));
+    const preset = presets[name];
+
+    if (!preset) {
+      return res.status(404).json({ error: 'Preset not found' });
+    }
+
+    // Apply volumes
+    // preset is an array of { name: string, volume: number, isMuted: boolean }
+    let appliedCount = 0;
+    
+    if (Array.isArray(preset)) {
+      preset.forEach((appSetting: any) => {
+        // Try to find the app running
+        const success = AudioManager.setVolume(appSetting.name, appSetting.volume);
+        if (success) {
+            // Also try to set mute state if possible
+            AudioManager.muteApplication(appSetting.name, appSetting.isMuted);
+            appliedCount++;
+        }
+      });
+    }
+
+    res.json({ success: true, appliedCount });
+  } catch (error) {
+    console.error('Error applying preset:', error);
+    res.status(500).json({ error: 'Failed to apply preset' });
+  }
+});
+
+// Delete a preset
+app.delete('/api/presets/:name', (req, res) => {
+  try {
+    const { name } = req.params;
+    if (!fs.existsSync(PRESETS_FILE)) {
+      return res.status(404).json({ error: 'No presets found' });
+    }
+
+    const presets = JSON.parse(fs.readFileSync(PRESETS_FILE, 'utf8'));
+    if (presets[name]) {
+      delete presets[name];
+      fs.writeFileSync(PRESETS_FILE, JSON.stringify(presets, null, 2));
+      res.json({ success: true, presets });
+    } else {
+      res.status(404).json({ error: 'Preset not found' });
+    }
+  } catch (error) {
+    console.error('Error deleting preset:', error);
+    res.status(500).json({ error: 'Failed to delete preset' });
+  }
+});
+
 // Start the server
 server.listen(PORT, HOST, () => {
   logger.info('========================================');
@@ -317,14 +510,18 @@ server.listen(PORT, HOST, () => {
   });
   
   // Log available audio applications on startup
-  const apps = AudioManager.getApplications();
-  if (apps.length > 0) {
-    logger.info('Available audio applications:');
-    apps.forEach(app => {
-      logger.info(`- ${app.name} (PID: ${app.pid}): ${app.volume}% ${app.isMuted ? '[MUTED]' : ''}`);
-    });
-  } else {
-    logger.warn('No audio applications found. Make sure some applications are playing audio.');
+  try {
+    const apps = AudioManager.getApplications();
+    if (apps.length > 0) {
+      logger.info('Available audio applications:');
+      apps.forEach(app => {
+        logger.info(`- ${app.name} (PID: ${app.pid}): ${app.volume}% ${app.isMuted ? '[MUTED]' : ''}`);
+      });
+    } else {
+      logger.warn('No audio applications found. Make sure some applications are playing audio.');
+    }
+  } catch (error) {
+    logger.error('Failed to initialize audio manager or get applications:', error);
   }
 });
 
@@ -386,6 +583,7 @@ setInterval(() => {
 // Handle process termination
 process.on('SIGINT', () => {
   console.log('Shutting down server...');
+  MediaController.getInstance().destroy();
   wss.clients.forEach(client => {
     if (client.readyState === WebSocket.OPEN) {
       client.close();

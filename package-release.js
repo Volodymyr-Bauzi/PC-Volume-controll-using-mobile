@@ -30,11 +30,24 @@ const platforms = [
       'build/Release/addon.node',
       'start.sh'
     ]
+  },
+  {
+    name: 'macos',
+    srcDir: path.join(__dirname, 'dist', 'mac'),
+    files: [
+      'volume-control',
+      'addon.node',
+      'start.sh'
+    ]
   }
 ];
 
-// Package each platform
+// Package each platform (skip platforms that weren't built on this machine)
 platforms.forEach(platform => {
+  if (!fs.existsSync(platform.srcDir)) {
+    console.log(`\nSkipping ${platform.name} - ${platform.srcDir} not found (not built on this machine)`);
+    return;
+  }
   console.log(`\nPackaging ${platform.name}...`);
   
   // Create temp directory for this platform

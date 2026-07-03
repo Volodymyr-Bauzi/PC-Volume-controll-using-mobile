@@ -24,11 +24,15 @@ export class LinuxAudioControl implements IAudioControl {
 
   private loadAddon(): NativeAddon {
     const possiblePaths = [
-      // Development path
+      // Unified addon name produced by backend/binding.gyp (target "addon")
+      path.resolve(__dirname, '../../../build/Release/addon.node'),
+      path.resolve(process.cwd(), 'build/Release/addon.node'),
+      path.resolve(process.cwd(), 'addon.node'),
+      // When running from packaged executable
+      path.resolve(path.dirname(process.execPath), 'addon.node'),
+      // Legacy standalone build names (src/platforms/linux/binding.gyp)
       path.resolve(__dirname, '../../../build/Release/linux-addon.node'),
-      // Production path
       path.resolve(process.cwd(), 'build/Release/linux-addon.node'),
-      // Fallback path
       path.resolve(process.cwd(), 'linux-addon.node')
     ];
 

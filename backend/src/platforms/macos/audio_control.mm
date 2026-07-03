@@ -1,365 +1,229 @@
-#import <Foundation/Foundation.h>
+// macOS audio control addon.
+//
+// Implements system (master) volume + mute via CoreAudio on the default
+// output device. Per-application volume is NOT possible with public
+// CoreAudio APIs (it requires a virtual audio driver such as those used
+// by BackgroundMusic/Loopback), so the per-app functions are exported as
+// graceful no-ops: getAudioApplications() returns an empty array and the
+// setters return false. The TypeScript layer treats this as "no
+// controllable apps" and the UI simply shows the master volume card.
+//
+// Exported API (must match NativeAddon in macos-audio-control.ts):
+//   getMasterVolumeLevelScalar(): number        0.0 - 1.0
+//   setMasterVolumeLevelScalar(v: number): void
+//   isMasterMuted(): boolean
+//   muteMaster(mute: boolean): void
+//   getAudioApplications(): []
+//   setApplicationVolume(pid, volume): false
+//   setApplicationMute(pid, mute): false
+
+#include <napi.h>
+
 #import <CoreAudio/CoreAudio.h>
-#import <node_api.h>
-#import <vector>
-#import <string>
+#import <Foundation/Foundation.h>
 
-// Structure to hold audio application information
-struct AudioAppInfo {
-    pid_t pid;
-    std::string name;
-    float volume;
-    bool muted;
-};
+namespace {
 
-// Get list of applications with audio sessions
-static std::vector<AudioAppInfo> GetAudioApplications() {
-    std::vector<AudioAppInfo> apps;
-    
-    // Get audio system object
-    AudioObjectID systemObj = kAudioObjectSystemObject;
-    
-    // Get output devices
-    AudioObjectPropertyAddress propertyAddress = {
-        kAudioHardwarePropertyDevices,
-        kAudioObjectPropertyScopeGlobal,
-        kAudioObjectPropertyElementMain
-    };
-    
-    UInt32 dataSize = 0;
-    OSStatus status = AudioObjectGetPropertyDataSize(systemObj, &propertyAddress, 0, NULL, &dataSize);
-    if (status != noErr) return apps;
-    
-    int deviceCount = dataSize / sizeof(AudioDeviceID);
-    std::vector<AudioDeviceID> devices(deviceCount);
-    
-    status = AudioObjectGetPropertyData(systemObj, &propertyAddress, 0, NULL, &dataSize, devices.data());
-    if (status != noErr) return apps;
-    
-    // For each device, get its audio streams
-    for (const auto& device : devices) {
-        propertyAddress.mSelector = kAudioDevicePropertyStreams;
-        propertyAddress.mScope = kAudioDevicePropertyScopeOutput;
-        
-        status = AudioObjectGetPropertyDataSize(device, &propertyAddress, 0, NULL, &dataSize);
-        if (status != noErr) continue;
-        
-        int streamCount = dataSize / sizeof(AudioStreamID);
-        std::vector<AudioStreamID> streams(streamCount);
-        
-        status = AudioObjectGetPropertyData(device, &propertyAddress, 0, NULL, &dataSize, streams.data());
-        if (status != noErr) continue;
-        
-        // For each stream, get its volume and other properties
-        for (const auto& stream : streams) {
-            AudioObjectPropertyAddress volumeAddress = {
-                kAudioStreamPropertyVolume,
-                kAudioObjectPropertyScopeGlobal,
-                kAudioObjectPropertyElementMain
-            };
-            
-            Float32 volume;
-            dataSize = sizeof(Float32);
-            status = AudioObjectGetPropertyData(stream, &volumeAddress, 0, NULL, &dataSize, &volume);
-            
-            if (status == noErr) {
-                // Get process info
-                pid_t pid;
-                dataSize = sizeof(pid_t);
-                AudioObjectPropertyAddress processAddress = {
-                    kAudioStreamPropertyOwningProcess,
-                    kAudioObjectPropertyScopeGlobal,
-                    kAudioObjectPropertyElementMain
-                };
-                
-                status = AudioObjectGetPropertyData(stream, &processAddress, 0, NULL, &dataSize, &pid);
-                if (status == noErr) {
-                    // Get process name
-                    proc_name_t processName;
-                    proc_name(pid, processName, sizeof(processName));
-                    
-                    // Get mute state
-                    UInt32 muted;
-                    dataSize = sizeof(UInt32);
-                    AudioObjectPropertyAddress muteAddress = {
-                        kAudioStreamPropertyMute,
-                        kAudioObjectPropertyScopeGlobal,
-                        kAudioObjectPropertyElementMain
-                    };
-                    
-                    status = AudioObjectGetPropertyData(stream, &muteAddress, 0, NULL, &dataSize, &muted);
-                    if (status == noErr) {
-                        AudioAppInfo appInfo;
-                        appInfo.pid = pid;
-                        appInfo.name = processName;
-                        appInfo.volume = volume * 100.0f; // Convert to percentage
-                        appInfo.muted = muted != 0;
-                        apps.push_back(appInfo);
-                    }
-                }
-            }
-        }
-    }
-    
-    return apps;
+// kAudioObjectPropertyElementMain is only defined in the macOS 12+ SDK;
+// its value (0) is identical to the older ElementMaster.
+const AudioObjectPropertyElement kElementMain = 0;
+
+AudioDeviceID GetDefaultOutputDevice() {
+  AudioDeviceID device = kAudioObjectUnknown;
+  UInt32 size = sizeof(device);
+  AudioObjectPropertyAddress addr = {
+    kAudioHardwarePropertyDefaultOutputDevice,
+    kAudioObjectPropertyScopeGlobal,
+    kElementMain
+  };
+  OSStatus status = AudioObjectGetPropertyData(
+      kAudioObjectSystemObject, &addr, 0, nullptr, &size, &device);
+  return (status == noErr) ? device : kAudioObjectUnknown;
 }
 
-// Set volume for a specific application
-static bool SetApplicationVolume(pid_t pid, float volume) {
-    // Convert percentage to CoreAudio scale (0.0 - 1.0)
-    float scaledVolume = volume / 100.0f;
-    
-    // Find the audio stream for this process
-    AudioObjectID systemObj = kAudioObjectSystemObject;
-    AudioObjectPropertyAddress propertyAddress = {
-        kAudioHardwarePropertyDevices,
-        kAudioObjectPropertyScopeGlobal,
-        kAudioObjectPropertyElementMain
-    };
-    
-    UInt32 dataSize = 0;
-    OSStatus status = AudioObjectGetPropertyDataSize(systemObj, &propertyAddress, 0, NULL, &dataSize);
-    if (status != noErr) return false;
-    
-    int deviceCount = dataSize / sizeof(AudioDeviceID);
-    std::vector<AudioDeviceID> devices(deviceCount);
-    
-    status = AudioObjectGetPropertyData(systemObj, &propertyAddress, 0, NULL, &dataSize, devices.data());
-    if (status != noErr) return false;
-    
-    for (const auto& device : devices) {
-        propertyAddress.mSelector = kAudioDevicePropertyStreams;
-        propertyAddress.mScope = kAudioDevicePropertyScopeOutput;
-        
-        status = AudioObjectGetPropertyDataSize(device, &propertyAddress, 0, NULL, &dataSize);
-        if (status != noErr) continue;
-        
-        int streamCount = dataSize / sizeof(AudioStreamID);
-        std::vector<AudioStreamID> streams(streamCount);
-        
-        status = AudioObjectGetPropertyData(device, &propertyAddress, 0, NULL, &dataSize, streams.data());
-        if (status != noErr) continue;
-        
-        for (const auto& stream : streams) {
-            pid_t streamPid;
-            dataSize = sizeof(pid_t);
-            AudioObjectPropertyAddress processAddress = {
-                kAudioStreamPropertyOwningProcess,
-                kAudioObjectPropertyScopeGlobal,
-                kAudioObjectPropertyElementMain
-            };
-            
-            status = AudioObjectGetPropertyData(stream, &processAddress, 0, NULL, &dataSize, &streamPid);
-            if (status == noErr && streamPid == pid) {
-                AudioObjectPropertyAddress volumeAddress = {
-                    kAudioStreamPropertyVolume,
-                    kAudioObjectPropertyScopeGlobal,
-                    kAudioObjectPropertyElementMain
-                };
-                
-                status = AudioObjectSetPropertyData(stream, &volumeAddress, 0, NULL, sizeof(Float32), &scaledVolume);
-                return status == noErr;
-            }
-        }
+// Volume: try the main element first; some devices only expose
+// per-channel volume, so fall back to averaging channels 1 and 2.
+bool GetMasterVolumeScalar(Float32 &outVolume) {
+  AudioDeviceID device = GetDefaultOutputDevice();
+  if (device == kAudioObjectUnknown) return false;
+
+  AudioObjectPropertyAddress addr = {
+    kAudioDevicePropertyVolumeScalar,
+    kAudioDevicePropertyScopeOutput,
+    kElementMain
+  };
+
+  Float32 volume = 0.0f;
+  UInt32 size = sizeof(volume);
+  if (AudioObjectHasProperty(device, &addr) &&
+      AudioObjectGetPropertyData(device, &addr, 0, nullptr, &size, &volume) == noErr) {
+    outVolume = volume;
+    return true;
+  }
+
+  // Per-channel fallback
+  Float32 sum = 0.0f;
+  int count = 0;
+  for (AudioObjectPropertyElement channel = 1; channel <= 2; channel++) {
+    addr.mElement = channel;
+    size = sizeof(volume);
+    if (AudioObjectHasProperty(device, &addr) &&
+        AudioObjectGetPropertyData(device, &addr, 0, nullptr, &size, &volume) == noErr) {
+      sum += volume;
+      count++;
     }
-    
-    return false;
+  }
+  if (count > 0) {
+    outVolume = sum / count;
+    return true;
+  }
+  return false;
 }
 
-// Set mute state for a specific application
-static bool SetApplicationMute(pid_t pid, bool mute) {
-    AudioObjectID systemObj = kAudioObjectSystemObject;
-    AudioObjectPropertyAddress propertyAddress = {
-        kAudioHardwarePropertyDevices,
-        kAudioObjectPropertyScopeGlobal,
-        kAudioObjectPropertyElementMain
-    };
-    
-    UInt32 dataSize = 0;
-    OSStatus status = AudioObjectGetPropertyDataSize(systemObj, &propertyAddress, 0, NULL, &dataSize);
-    if (status != noErr) return false;
-    
-    int deviceCount = dataSize / sizeof(AudioDeviceID);
-    std::vector<AudioDeviceID> devices(deviceCount);
-    
-    status = AudioObjectGetPropertyData(systemObj, &propertyAddress, 0, NULL, &dataSize, devices.data());
-    if (status != noErr) return false;
-    
-    for (const auto& device : devices) {
-        propertyAddress.mSelector = kAudioDevicePropertyStreams;
-        propertyAddress.mScope = kAudioDevicePropertyScopeOutput;
-        
-        status = AudioObjectGetPropertyDataSize(device, &propertyAddress, 0, NULL, &dataSize);
-        if (status != noErr) continue;
-        
-        int streamCount = dataSize / sizeof(AudioStreamID);
-        std::vector<AudioStreamID> streams(streamCount);
-        
-        status = AudioObjectGetPropertyData(device, &propertyAddress, 0, NULL, &dataSize, streams.data());
-        if (status != noErr) continue;
-        
-        for (const auto& stream : streams) {
-            pid_t streamPid;
-            dataSize = sizeof(pid_t);
-            AudioObjectPropertyAddress processAddress = {
-                kAudioStreamPropertyOwningProcess,
-                kAudioObjectPropertyScopeGlobal,
-                kAudioObjectPropertyElementMain
-            };
-            
-            status = AudioObjectGetPropertyData(stream, &processAddress, 0, NULL, &dataSize, &streamPid);
-            if (status == noErr && streamPid == pid) {
-                UInt32 muteValue = mute ? 1 : 0;
-                AudioObjectPropertyAddress muteAddress = {
-                    kAudioStreamPropertyMute,
-                    kAudioObjectPropertyScopeGlobal,
-                    kAudioObjectPropertyElementMain
-                };
-                
-                status = AudioObjectSetPropertyData(stream, &muteAddress, 0, NULL, sizeof(UInt32), &muteValue);
-                return status == noErr;
-            }
-        }
+bool SetMasterVolumeScalar(Float32 volume) {
+  AudioDeviceID device = GetDefaultOutputDevice();
+  if (device == kAudioObjectUnknown) return false;
+
+  if (volume < 0.0f) volume = 0.0f;
+  if (volume > 1.0f) volume = 1.0f;
+
+  AudioObjectPropertyAddress addr = {
+    kAudioDevicePropertyVolumeScalar,
+    kAudioDevicePropertyScopeOutput,
+    kElementMain
+  };
+
+  Boolean settable = false;
+  if (AudioObjectHasProperty(device, &addr) &&
+      AudioObjectIsPropertySettable(device, &addr, &settable) == noErr && settable) {
+    return AudioObjectSetPropertyData(
+        device, &addr, 0, nullptr, sizeof(volume), &volume) == noErr;
+  }
+
+  // Per-channel fallback
+  bool anySet = false;
+  for (AudioObjectPropertyElement channel = 1; channel <= 2; channel++) {
+    addr.mElement = channel;
+    if (AudioObjectHasProperty(device, &addr) &&
+        AudioObjectIsPropertySettable(device, &addr, &settable) == noErr && settable &&
+        AudioObjectSetPropertyData(device, &addr, 0, nullptr, sizeof(volume), &volume) == noErr) {
+      anySet = true;
     }
-    
-    return false;
+  }
+  return anySet;
 }
 
-// Node.js N-API function implementations
-static napi_value GetAudioApplications(napi_env env, napi_callback_info info) {
-    napi_status status;
-    napi_value result;
-    
-    auto apps = GetAudioApplications();
-    
-    status = napi_create_array_with_length(env, apps.size(), &result);
-    if (status != napi_ok) return nullptr;
-    
-    for (size_t i = 0; i < apps.size(); i++) {
-        napi_value app_obj;
-        status = napi_create_object(env, &app_obj);
-        if (status != napi_ok) continue;
-        
-        napi_value pid_val, name_val, volume_val, muted_val;
-        
-        status = napi_create_int32(env, apps[i].pid, &pid_val);
-        if (status == napi_ok) {
-            napi_set_named_property(env, app_obj, "pid", pid_val);
-        }
-        
-        status = napi_create_string_utf8(env, apps[i].name.c_str(), NAPI_AUTO_LENGTH, &name_val);
-        if (status == napi_ok) {
-            napi_set_named_property(env, app_obj, "name", name_val);
-        }
-        
-        status = napi_create_double(env, apps[i].volume, &volume_val);
-        if (status == napi_ok) {
-            napi_set_named_property(env, app_obj, "volume", volume_val);
-        }
-        
-        status = napi_get_boolean(env, apps[i].muted, &muted_val);
-        if (status == napi_ok) {
-            napi_set_named_property(env, app_obj, "muted", muted_val);
-        }
-        
-        napi_set_element(env, result, i, app_obj);
-    }
-    
-    return result;
+bool GetMasterMuted(bool &outMuted) {
+  AudioDeviceID device = GetDefaultOutputDevice();
+  if (device == kAudioObjectUnknown) return false;
+
+  AudioObjectPropertyAddress addr = {
+    kAudioDevicePropertyMute,
+    kAudioDevicePropertyScopeOutput,
+    kElementMain
+  };
+
+  UInt32 muted = 0;
+  UInt32 size = sizeof(muted);
+  if (AudioObjectHasProperty(device, &addr) &&
+      AudioObjectGetPropertyData(device, &addr, 0, nullptr, &size, &muted) == noErr) {
+    outMuted = (muted != 0);
+    return true;
+  }
+  return false;
 }
 
-static napi_value SetApplicationVolume(napi_env env, napi_callback_info info) {
-    napi_status status;
-    size_t argc = 2;
-    napi_value args[2];
-    
-    status = napi_get_cb_info(env, info, &argc, args, nullptr, nullptr);
-    if (status != napi_ok || argc < 2) {
-        napi_throw_error(env, nullptr, "Wrong number of arguments");
-        return nullptr;
-    }
-    
-    int32_t pid;
-    status = napi_get_value_int32(env, args[0], &pid);
-    if (status != napi_ok) {
-        napi_throw_error(env, nullptr, "Invalid PID argument");
-        return nullptr;
-    }
-    
-    double volume;
-    status = napi_get_value_double(env, args[1], &volume);
-    if (status != napi_ok) {
-        napi_throw_error(env, nullptr, "Invalid volume argument");
-        return nullptr;
-    }
-    
-    bool success = SetApplicationVolume(pid, static_cast<float>(volume));
-    
-    napi_value result;
-    status = napi_get_boolean(env, success, &result);
-    if (status != napi_ok) return nullptr;
-    
-    return result;
+bool SetMasterMuted(bool mute) {
+  AudioDeviceID device = GetDefaultOutputDevice();
+  if (device == kAudioObjectUnknown) return false;
+
+  AudioObjectPropertyAddress addr = {
+    kAudioDevicePropertyMute,
+    kAudioDevicePropertyScopeOutput,
+    kElementMain
+  };
+
+  UInt32 value = mute ? 1 : 0;
+  Boolean settable = false;
+  if (AudioObjectHasProperty(device, &addr) &&
+      AudioObjectIsPropertySettable(device, &addr, &settable) == noErr && settable) {
+    return AudioObjectSetPropertyData(
+        device, &addr, 0, nullptr, sizeof(value), &value) == noErr;
+  }
+  return false;
 }
 
-static napi_value SetApplicationMute(napi_env env, napi_callback_info info) {
-    napi_status status;
-    size_t argc = 2;
-    napi_value args[2];
-    
-    status = napi_get_cb_info(env, info, &argc, args, nullptr, nullptr);
-    if (status != napi_ok || argc < 2) {
-        napi_throw_error(env, nullptr, "Wrong number of arguments");
-        return nullptr;
-    }
-    
-    int32_t pid;
-    status = napi_get_value_int32(env, args[0], &pid);
-    if (status != napi_ok) {
-        napi_throw_error(env, nullptr, "Invalid PID argument");
-        return nullptr;
-    }
-    
-    bool mute;
-    status = napi_get_value_bool(env, args[1], &mute);
-    if (status != napi_ok) {
-        napi_throw_error(env, nullptr, "Invalid mute argument");
-        return nullptr;
-    }
-    
-    bool success = SetApplicationMute(pid, mute);
-    
-    napi_value result;
-    status = napi_get_boolean(env, success, &result);
-    if (status != napi_ok) return nullptr;
-    
-    return result;
+// ---------- N-API bindings ----------
+
+Napi::Value GetMasterVolumeLevelScalar(const Napi::CallbackInfo &info) {
+  Napi::Env env = info.Env();
+  Float32 volume = 1.0f;
+  if (!GetMasterVolumeScalar(volume)) {
+    // No controllable volume (e.g. HDMI/DisplayPort output) — report 100%.
+    volume = 1.0f;
+  }
+  return Napi::Number::New(env, volume);
 }
 
-// Module initialization
-static napi_value Init(napi_env env, napi_value exports) {
-    napi_status status;
-    napi_value fn;
-    
-    // Register getAudioApplications
-    status = napi_create_function(env, nullptr, 0, GetAudioApplications, nullptr, &fn);
-    if (status == napi_ok) {
-        status = napi_set_named_property(env, exports, "getAudioApplications", fn);
-    }
-    
-    // Register setApplicationVolume
-    status = napi_create_function(env, nullptr, 0, SetApplicationVolume, nullptr, &fn);
-    if (status == napi_ok) {
-        status = napi_set_named_property(env, exports, "setApplicationVolume", fn);
-    }
-    
-    // Register setApplicationMute
-    status = napi_create_function(env, nullptr, 0, SetApplicationMute, nullptr, &fn);
-    if (status == napi_ok) {
-        status = napi_set_named_property(env, exports, "setApplicationMute", fn);
-    }
-    
-    return exports;
+Napi::Value SetMasterVolumeLevelScalar(const Napi::CallbackInfo &info) {
+  Napi::Env env = info.Env();
+  if (info.Length() < 1 || !info[0].IsNumber()) {
+    Napi::TypeError::New(env, "Expected volume as number (0.0-1.0)")
+        .ThrowAsJavaScriptException();
+    return env.Null();
+  }
+  SetMasterVolumeScalar(info[0].As<Napi::Number>().FloatValue());
+  return env.Null();
 }
 
-NAPI_MODULE(NODE_GYP_MODULE_NAME, Init)
+Napi::Value IsMasterMuted(const Napi::CallbackInfo &info) {
+  Napi::Env env = info.Env();
+  bool muted = false;
+  GetMasterMuted(muted);
+  return Napi::Boolean::New(env, muted);
+}
+
+Napi::Value MuteMaster(const Napi::CallbackInfo &info) {
+  Napi::Env env = info.Env();
+  if (info.Length() < 1 || !info[0].IsBoolean()) {
+    Napi::TypeError::New(env, "Expected mute as boolean")
+        .ThrowAsJavaScriptException();
+    return env.Null();
+  }
+  SetMasterMuted(info[0].As<Napi::Boolean>().Value());
+  return env.Null();
+}
+
+// Per-application control is not supported by public CoreAudio APIs.
+Napi::Value GetAudioApplications(const Napi::CallbackInfo &info) {
+  return Napi::Array::New(info.Env(), 0);
+}
+
+Napi::Value SetApplicationVolume(const Napi::CallbackInfo &info) {
+  return Napi::Boolean::New(info.Env(), false);
+}
+
+Napi::Value SetApplicationMute(const Napi::CallbackInfo &info) {
+  return Napi::Boolean::New(info.Env(), false);
+}
+
+Napi::Object Init(Napi::Env env, Napi::Object exports) {
+  exports.Set("getMasterVolumeLevelScalar",
+              Napi::Function::New(env, GetMasterVolumeLevelScalar));
+  exports.Set("setMasterVolumeLevelScalar",
+              Napi::Function::New(env, SetMasterVolumeLevelScalar));
+  exports.Set("isMasterMuted", Napi::Function::New(env, IsMasterMuted));
+  exports.Set("muteMaster", Napi::Function::New(env, MuteMaster));
+
+  exports.Set("getAudioApplications",
+              Napi::Function::New(env, GetAudioApplications));
+  exports.Set("setApplicationVolume",
+              Napi::Function::New(env, SetApplicationVolume));
+  exports.Set("setApplicationMute",
+              Napi::Function::New(env, SetApplicationMute));
+  return exports;
+}
+
+}  // namespace
+
+NODE_API_MODULE(NODE_GYP_MODULE_NAME, Init)
