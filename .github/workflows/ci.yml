@@ -1,0 +1,144 @@
+name: CI
+
+# Runs on every push to any branch (tags are handled by release.yml)
+on:
+  push:
+    branches:
+      - '**'
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  checks:
+    name: Lint, Type-check & Test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18.x'
+          cache: 'npm'
+
+      # Same system deps as release.yml — npm ci triggers node-gyp for the
+      # backend workspace (gypfile: true), which needs PulseAudio headers on Linux
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libpulse-dev build-essential libasound2-dev libpulse-mainloop-glib0
+
+      - name: Install Node.js dependencies
+        run: npm ci
+
+      - name: Lint frontend
+        run: npm run lint --workspace=frontend
+
+      - name: Type-check frontend
+        run: npm run type-check --workspace=frontend
+
+      - name: Type-check backend
+        run: npm run type-check --workspace=backend
+
+      - name: Run tests
+        run: npm test
+
+  build:
+    name: Build (${{ matrix.artifact }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, ubuntu-latest, macos-latest]
+        include:
+          - os: windows-latest
+            artifact: windows
+          - os: ubuntu-latest
+            artifact: linux
+          - os: macos-latest
+            artifact: macos
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18.x'
+          cache: 'npm'
+
+      - name: Install system dependencies (Linux)
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libpulse-dev build-essential libasound2-dev libpulse-mainloop-glib0
+
+      - name: Install Node.js dependencies
+        run: npm ci
+
+      # Compiles frontend (tsc -b + vite) and backend (node-gyp native addon + tsc)
+      # to catch compile errors on all target platforms
+      - name: Build frontend
+        run: npm run build --workspace=frontend
+
+      - name: Build backend (incl. native addon)
+        run: npm run build --workspace=backend
+
+  package:
+    name: Package distributable (${{ matrix.artifact }})
+    # Only package on pushes to main — artifacts replace the manual packaging step
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: [checks, build]
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, ubuntu-latest]
+        include:
+          - os: windows-latest
+            artifact: windows
+            build_cmd: npm run package:win
+          - os: ubuntu-latest
+            artifact: linux
+            build_cmd: npm run package:linux
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18.x'
+          cache: 'npm'
+
+      - name: Install system dependencies (Linux)
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libpulse-dev build-essential libasound2-dev libpulse-mainloop-glib0
+
+      - name: Install Node.js dependencies
+        run: npm ci
+
+      - name: Build and package application
+        run: ${{ matrix.build_cmd }}
+
+      - name: Create release ZIP
+        run: node package-release.js
+
+      - name: Upload distributable ZIP
+        uses: actions/upload-artifact@v4
+        with:
+          name: volume-control-${{ matrix.artifact }}
+          path: release/volume-control-${{ matrix.artifact }}-v*.zip
+          if-no-files-found: error
+          retention-days: 14
