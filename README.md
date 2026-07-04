@@ -16,10 +16,10 @@ A sleek, responsive web application that transforms your mobile device into a re
 We provide pre-built packages for easy installation. Please visit our [Releases page](https://github.com/Volodymyr-Bauzi/PC-Volume-controll-using-mobile/releases) to download the latest version for your platform.
 
 ### Windows
-- [Download for Windows](https://github.com/Volodymyr-Bauzi/PC-Volume-controll-using-mobile/releases/download/v1.2.10/volume-control-windows-v1.2.10.zip)
+- [Download for Windows](https://github.com/Volodymyr-Bauzi/PC-Volume-controll-using-mobile/releases/download/${VERSION}/volume-control-windows-v${VERSION}.zip)
   
 ### Linux
-- [Download for Linux](https://github.com/Volodymyr-Bauzi/PC-Volume-controll-using-mobile/releases/download/v1.2.10/volume-control-linux-v1.2.10.zip)
+- [Download for Linux](https://github.com/Volodymyr-Bauzi/PC-Volume-controll-using-mobile/releases/download/${VERSION}/volume-control-linux-v${VERSION}.zip)
 
 > **Note**: After downloading, make sure to check the release notes for any specific installation instructions.
 
