@@ -131,20 +131,16 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.artifact }}
-          path: |
-            dist/${{ matrix.dist_dir }}
-            release/volume-control-windows-v*.zip
+          path: release/volume-control-windows-v*.zip
           if-no-files-found: error
           retention-days: 1
-          
+
       - name: Upload artifacts (Linux)
         if: matrix.os == 'ubuntu-latest'
         uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.artifact }}
-          path: |
-            dist/${{ matrix.dist_dir }}
-            release/volume-control-linux-v*.zip
+          path: release/volume-control-linux-v*.zip
           if-no-files-found: error
           retention-days: 1
 
@@ -163,7 +159,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: linux
-          path: release
+          path: artifacts
 
       - name: List downloaded files
         run: find . -type f -name '*.zip' -exec ls -la {} \;
