@@ -93,10 +93,13 @@ interface VolumeRequest {
 }
 
 interface WebSocketMessage {
-  type: 'volume_changed' | 'app_added' | 'app_removed';
-  app_name: string;
+  type: 'volume_changed' | 'app_added' | 'app_removed' | 'applications_updated' | 'pong';
+  app_name?: string;
   volume?: number;
+  isMuted?: boolean;
+  pid?: number;
   data?: any;
+  timestamp?: number;
 }
 
 type WebSocketClient = WebSocket;
@@ -171,6 +174,20 @@ wss.on('connection', (ws) => {
     }));
   }
   
+  // Answer client heartbeats. The frontend sends JSON {type:'ping'} and
+  // force-closes the socket if no pong arrives — without this handler the
+  // connection cycles forever and live app-list events get lost.
+  ws.on('message', (raw) => {
+    try {
+      const msg = JSON.parse(raw.toString());
+      if (msg && msg.type === 'ping') {
+        ws.send(JSON.stringify({ type: 'pong', timestamp: Date.now() }));
+      }
+    } catch {
+      // ignore malformed messages
+    }
+  });
+
   ws.on('close', () => {
     console.log('Client disconnected');
     clients.delete(ws);
@@ -593,7 +610,9 @@ setInterval(() => {
         broadcast({
           type: 'app_added',
           app_name: currentApp.name,
-          volume: currentApp.volume
+          volume: currentApp.volume,
+          isMuted: currentApp.isMuted,
+          pid: currentApp.pid
         });
       } else if (currentApp.volume !== prevApp.volume || currentApp.isMuted !== prevApp.isMuted) {
         // Volume or mute state changed
@@ -601,7 +620,8 @@ setInterval(() => {
         broadcast({
           type: 'volume_changed',
           app_name: currentApp.name,
-          volume: currentApp.volume
+          volume: currentApp.volume,
+          isMuted: currentApp.isMuted
         });
       }
     });

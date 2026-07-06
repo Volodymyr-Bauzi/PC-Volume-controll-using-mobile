@@ -1,8 +1,16 @@
 export interface WebSocketMessage {
-  type: 'ping' | 'pong' | 'volume_changed' | 'app_added' | 'app_removed';
+  type:
+    | 'ping'
+    | 'pong'
+    | 'volume_changed'
+    | 'app_added'
+    | 'app_removed'
+    | 'applications_updated';
   data?: unknown;
   app_name?: string;
   volume?: number;
+  isMuted?: boolean;
+  pid?: number;
   timestamp?: number;
 }
 

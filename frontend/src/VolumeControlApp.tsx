@@ -40,6 +40,7 @@ export function VolumeControlApp() {
     error,
     handleVolumeChange,
     handleWebSocketVolumeChange,
+    handleApplicationsSync,
     toggleMute,
   } = useVolumeControl([]);
 
@@ -53,6 +54,7 @@ export function VolumeControlApp() {
   // Set up WebSocket connection
   useWebSocket({
     onVolumeChange: handleWebSocketVolumeChange,
+    onApplicationsSync: handleApplicationsSync,
     apiUrl,
   });
 

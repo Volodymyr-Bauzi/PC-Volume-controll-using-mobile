@@ -194,10 +194,14 @@ export const useVolumeControl = (initialApplications: Application[] = []) => {
       appName,
       volume,
       action,
+      isMuted,
+      pid,
     }: {
       appName: string;
       volume: number;
       action?: "update" | "add" | "remove";
+      isMuted?: boolean;
+      pid?: number;
     }) => {
       // Ignore WS updates that conflict with a pending local change
       const hasPendingDebounce = Boolean(updateTimeoutRef.current[appName]);
@@ -223,7 +227,12 @@ export const useVolumeControl = (initialApplications: Application[] = []) => {
             if (!prev.some((app) => app.name === appName)) {
               return [
                 ...prev,
-                { name: appName, volume: volume, pid: 0, isMuted: false },
+                {
+                  name: appName,
+                  volume: volume,
+                  pid: pid ?? 0,
+                  isMuted: isMuted ?? false,
+                },
               ];
             }
             return prev;
@@ -233,7 +242,12 @@ export const useVolumeControl = (initialApplications: Application[] = []) => {
           default:
             return prev.map((app) =>
               app.name === appName
-                ? { ...app, volume: volume, isMuted: app.isMuted }
+                ? {
+                    ...app,
+                    volume: volume,
+                    // Apply external mute changes when the server reports them
+                    isMuted: typeof isMuted === "boolean" ? isMuted : app.isMuted,
+                  }
                 : app
             );
         }
@@ -241,6 +255,22 @@ export const useVolumeControl = (initialApplications: Application[] = []) => {
     },
     []
   );
+
+  // Full app-list snapshot from the server (sent on WS connect/reconnect).
+  // Replaces the list, but keeps local state for apps the user is actively
+  // adjusting (pending debounce or in-flight request) to avoid jitter.
+  const handleApplicationsSync = useCallback((apps: Application[]) => {
+    setApplications((prev) => {
+      const prevByName = new Map(prev.map((app) => [app.name, app]));
+      return apps.map((incoming) => {
+        const local = prevByName.get(incoming.name);
+        const hasPendingLocalChange =
+          Boolean(updateTimeoutRef.current[incoming.name]) ||
+          Boolean(volumeRequestControllers.current[incoming.name]);
+        return local && hasPendingLocalChange ? local : incoming;
+      });
+    });
+  }, []);
 
   // WebSocket connection handled by useWebSocket hook; legacy WS removed
 
@@ -260,6 +290,7 @@ export const useVolumeControl = (initialApplications: Application[] = []) => {
     handleVolumeChange,
     handleVolumeChangeEnd,
     handleWebSocketVolumeChange,
+    handleApplicationsSync,
     toggleMute,
     refresh: fetchApplications,
   };
