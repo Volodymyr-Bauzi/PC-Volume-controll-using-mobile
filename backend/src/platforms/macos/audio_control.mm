@@ -16,9 +16,12 @@
 //   getAudioApplications(): []
 //   setApplicationVolume(pid, volume): false
 //   setApplicationMute(pid, mute): false
+//   sendMediaKey("playpause"|"next"|"prev"): boolean   (global media keys)
 
 #include <napi.h>
 
+#import <AppKit/AppKit.h>
+#import <ApplicationServices/ApplicationServices.h>
 #import <CoreAudio/CoreAudio.h>
 #import <Foundation/Foundation.h>
 
@@ -194,6 +197,91 @@ Napi::Value MuteMaster(const Napi::CallbackInfo &info) {
   return env.Null();
 }
 
+// ---------- Media keys ----------
+//
+// Posts the same aux-keyboard (NX) events that the hardware media keys on a
+// Mac keyboard produce (F7/F8/F9). macOS routes them to whichever app owns
+// the "Now Playing" session — exactly like pressing the physical keys.
+//
+// NOTE: posting events to the HID event tap requires the app that runs this
+// binary (Terminal, iTerm, or the packaged volume-control executable) to be
+// granted Accessibility permission: System Settings → Privacy & Security →
+// Accessibility. Without it, macOS silently drops the events.
+
+// Values from <IOKit/hidsystem/ev_keymap.h> (hardcoded to avoid extra deps)
+const int kNXKeyPlay = 16;    // NX_KEYTYPE_PLAY   — F8, play/pause
+const int kNXKeyFast = 19;    // NX_KEYTYPE_FAST   — F9, next track
+const int kNXKeyRewind = 20;  // NX_KEYTYPE_REWIND — F7, previous track
+
+void PostAuxKeyEvent(int keyType, bool keyDown) {
+  @autoreleasepool {
+    NSInteger data1 =
+        (keyType << 16) | ((keyDown ? 0x0A : 0x0B) << 8);
+    NSEvent *ev =
+        [NSEvent otherEventWithType:NSEventTypeSystemDefined
+                           location:NSZeroPoint
+                      modifierFlags:(keyDown ? 0xA00 : 0xB00)
+                          timestamp:[[NSProcessInfo processInfo] systemUptime]
+                       windowNumber:0
+                            context:nil
+                            subtype:8
+                              data1:data1
+                              data2:-1];
+    CGEventRef cgEvent = [ev CGEvent];
+    if (cgEvent) {
+      CGEventPost(kCGHIDEventTap, cgEvent);
+    }
+  }
+}
+
+// checkAccessibilityPermission(prompt: boolean): boolean
+//
+// Returns whether this process is trusted for Accessibility (required for
+// posting media key events). When called with prompt=true and permission is
+// missing, macOS shows the official system dialog that deep-links to
+// System Settings → Privacy & Security → Accessibility. An unbundled CLI
+// binary never triggers that dialog on its own — events are just silently
+// dropped — so the server calls this explicitly at startup.
+Napi::Value CheckAccessibilityPermission(const Napi::CallbackInfo &info) {
+  Napi::Env env = info.Env();
+  bool prompt = info.Length() > 0 && info[0].IsBoolean() &&
+                info[0].As<Napi::Boolean>().Value();
+
+  bool trusted;
+  @autoreleasepool {
+    NSDictionary *options =
+        @{(__bridge NSString *)kAXTrustedCheckOptionPrompt : @(prompt)};
+    trusted = AXIsProcessTrustedWithOptions((__bridge CFDictionaryRef)options);
+  }
+  return Napi::Boolean::New(env, trusted);
+}
+
+// sendMediaKey("playpause" | "next" | "prev"): boolean
+Napi::Value SendMediaKey(const Napi::CallbackInfo &info) {
+  Napi::Env env = info.Env();
+  if (info.Length() < 1 || !info[0].IsString()) {
+    Napi::TypeError::New(env, "Expected action as string")
+        .ThrowAsJavaScriptException();
+    return env.Null();
+  }
+
+  std::string action = info[0].As<Napi::String>().Utf8Value();
+  int keyType;
+  if (action == "playpause") {
+    keyType = kNXKeyPlay;
+  } else if (action == "next") {
+    keyType = kNXKeyFast;
+  } else if (action == "prev") {
+    keyType = kNXKeyRewind;
+  } else {
+    return Napi::Boolean::New(env, false);
+  }
+
+  PostAuxKeyEvent(keyType, true);   // key down
+  PostAuxKeyEvent(keyType, false);  // key up
+  return Napi::Boolean::New(env, true);
+}
+
 // Per-application control is not supported by public CoreAudio APIs.
 Napi::Value GetAudioApplications(const Napi::CallbackInfo &info) {
   return Napi::Array::New(info.Env(), 0);
@@ -221,6 +309,10 @@ Napi::Object Init(Napi::Env env, Napi::Object exports) {
               Napi::Function::New(env, SetApplicationVolume));
   exports.Set("setApplicationMute",
               Napi::Function::New(env, SetApplicationMute));
+
+  exports.Set("sendMediaKey", Napi::Function::New(env, SendMediaKey));
+  exports.Set("checkAccessibilityPermission",
+              Napi::Function::New(env, CheckAccessibilityPermission));
   return exports;
 }
 

@@ -101,7 +101,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [windows-2022, ubuntu-latest]
+        os: [windows-2022, ubuntu-latest, macos-latest]
         include:
           - os: windows-2022
             artifact: windows
@@ -109,6 +109,9 @@ jobs:
           - os: ubuntu-latest
             artifact: linux
             build_cmd: npm run package:linux
+          - os: macos-latest
+            artifact: macos
+            build_cmd: npm run package:mac
 
     steps:
       - name: Checkout code

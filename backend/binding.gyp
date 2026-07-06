@@ -35,11 +35,16 @@
                         "GCC_ENABLE_CPP_EXCEPTIONS": "YES",
                         "CLANG_CXX_LIBRARY": "libc++",
                         "MACOSX_DEPLOYMENT_TARGET": "10.13",
-                        "OTHER_CPLUSPLUSFLAGS": [ "-ObjC++" ]
+                        "OTHER_CPLUSPLUSFLAGS": [ "-ObjC++" ],
+                        "OTHER_CFLAGS": [ "-arch x86_64", "-arch arm64" ],
+                        "OTHER_LDFLAGS": [ "-arch x86_64", "-arch arm64" ]
                     },
                     "link_settings": {
                         "libraries": [
                             "-framework CoreAudio",
+                            "-framework AppKit",
+                            "-framework CoreGraphics",
+                            "-framework ApplicationServices",
                             "-framework Foundation"
                         ]
                     }

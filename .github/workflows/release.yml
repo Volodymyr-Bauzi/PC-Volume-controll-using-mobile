@@ -14,7 +14,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [windows-2022, ubuntu-latest]
+        os: [windows-2022, ubuntu-latest, macos-latest]
         include:
           - os: windows-2022
             artifact: windows
@@ -24,6 +24,10 @@ jobs:
             artifact: linux
             build_cmd: npm run package:linux
             dist_dir: linux
+          - os: macos-latest
+            artifact: macos
+            build_cmd: npm run package:mac
+            dist_dir: mac
             
     steps:
       - name: Checkout code
@@ -74,8 +78,8 @@ jobs:
             echo "Directory not found"
           }
 
-      - name: Create release directory and package release (Linux)
-        if: matrix.os == 'ubuntu-latest'
+      - name: Create release directory and package release (Linux/macOS)
+        if: matrix.os != 'windows-2022'
         run: |
           mkdir -p release
           node package-release.js
@@ -144,6 +148,15 @@ jobs:
           if-no-files-found: error
           retention-days: 1
 
+      - name: Upload artifacts (macOS)
+        if: matrix.os == 'macos-latest'
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.artifact }}
+          path: release/volume-control-macos-v*.zip
+          if-no-files-found: error
+          retention-days: 1
+
   create-release:
     name: Create Release
     needs: build
@@ -159,6 +172,12 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: linux
+          path: artifacts
+
+      - name: Download macOS artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: macos
           path: artifacts
 
       - name: List downloaded files
@@ -180,18 +199,23 @@ jobs:
             ### Download Links
             - **Windows x64**: [volume-control-windows-${{ github.ref_name }}.zip](https://github.com/Volodymyr-Bauzi/PC-Volume-controll-using-mobile/releases/download/${{ github.ref_name }}/volume-control-windows-${{ github.ref_name }}.zip)
             - **Linux x64**: [volume-control-linux-${{ github.ref_name }}.zip](https://github.com/Volodymyr-Bauzi/PC-Volume-controll-using-mobile/releases/download/${{ github.ref_name }}/volume-control-linux-${{ github.ref_name }}.zip)
-            
+            - **macOS**: [volume-control-macos-${{ github.ref_name }}.zip](https://github.com/Volodymyr-Bauzi/PC-Volume-controll-using-mobile/releases/download/${{ github.ref_name }}/volume-control-macos-${{ github.ref_name }}.zip)
+
             ### Installation
             1. Download the appropriate zip file for your platform
             2. Extract the zip file
             3. Run the application:
                - Windows: Double-click `volume-control.exe`
                - Linux: Run `chmod +x volume-control` then `./volume-control`
+               - macOS: Run `./start.sh` (grant Accessibility permission for media keys)
+
+            > macOS note: only the main (system) volume and media keys are controllable — per-app volume is not available on macOS.
           draft: false
           prerelease: false
           files: |
             artifacts/volume-control-windows-*.zip
             artifacts/volume-control-linux-*.zip
+            artifacts/volume-control-macos-*.zip
 
   update-readme:
     name: Update README

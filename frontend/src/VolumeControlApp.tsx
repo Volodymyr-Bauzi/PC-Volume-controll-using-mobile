@@ -262,6 +262,14 @@ export function VolumeControlApp() {
               );
             })}
           </div>
+          {/* Informative empty state: e.g. macOS only exposes master volume */}
+          {applications.length === 0 && (
+            <Text c="dimmed" ta="center" size="sm" mt="lg">
+              No per-app audio sessions detected — this system only supports
+              controlling the main volume. On macOS, per-application volume
+              is not available.
+            </Text>
+          )}
           </>
         )}
       </div>

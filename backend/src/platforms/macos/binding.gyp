@@ -23,6 +23,9 @@
       "link_settings": {
         "libraries": [
           "-framework CoreAudio",
+          "-framework AppKit",
+          "-framework CoreGraphics",
+          "-framework ApplicationServices",
           "-framework Foundation"
         ]
       }
