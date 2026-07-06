@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.5.0](https://github.com/Volodymyr-Bauzi/PC-Volume-controll-using-mobile/compare/v1.4.0...v1.5.0) (2026-07-06)
+
+
+### Features
+
+* **websocket:** enhance WebSocket message structure and handling for application updates ([3945b2e](https://github.com/Volodymyr-Bauzi/PC-Volume-controll-using-mobile/commit/3945b2ee9f67d4feff67a3bafc952de42e2e9951))
+
 ## [1.4.0](https://github.com/Volodymyr-Bauzi/PC-Volume-controll-using-mobile/compare/v1.3.0...v1.4.0) (2026-07-06)
 
 
