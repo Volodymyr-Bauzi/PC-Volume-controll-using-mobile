@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.4.0](https://github.com/Volodymyr-Bauzi/PC-Volume-controll-using-mobile/compare/v1.3.0...v1.4.0) (2026-07-06)
+
+
+### Features
+
+* **macos:** accessibility permission prompt and UI hint ([bc8e5c4](https://github.com/Volodymyr-Bauzi/PC-Volume-controll-using-mobile/commit/bc8e5c4080d1cbeb5b8877f07934ec945ce1ec82))
+* **macos:** native media keys, universal addon, and mac distributables ([c23e8d1](https://github.com/Volodymyr-Bauzi/PC-Volume-controll-using-mobile/commit/c23e8d1f46144f816f3d33202d77f2b6b5314f72))
+
 ## [1.3.0](https://github.com/Volodymyr-Bauzi/PC-Volume-controll-using-mobile/compare/v1.2.10...v1.3.0) (2026-07-04)
 
 
