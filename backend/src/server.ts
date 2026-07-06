@@ -299,20 +299,54 @@ app.get('/api/system/mute', (req, res) => {
 });
 
 // Media Control Routes
+
+// On macOS, posting media key events requires Accessibility permission and
+// an unbundled binary never triggers the system prompt on its own (events
+// are silently dropped). Ask explicitly once at startup so the user gets
+// the official dialog that deep-links to System Settings.
+if (process.platform === 'darwin' && MediaController.isSupported()) {
+  const state = MediaController.getPermissionState(true); // prompt if missing
+  if (state === 'granted') {
+    console.log('[media] Accessibility permission granted — media keys enabled.');
+  } else if (state === 'denied') {
+    console.warn(
+      '[media] Accessibility permission NOT granted. Media keys will not work ' +
+        'until you enable this app under System Settings → Privacy & Security → ' +
+        'Accessibility, then restart it. macOS should have just shown a prompt.'
+    );
+  }
+}
+
+// Lets the frontend know whether media keys work on this platform and
+// whether the OS permission is in place, so it can hide the controls or
+// show a permission hint instead of dead buttons.
+app.get('/api/media/capabilities', (req: Request, res: Response) => {
+  res.json({
+    supported: MediaController.isSupported(),
+    mediaPermission: MediaController.getPermissionState(false),
+  });
+});
+
 app.post('/api/media/:action', (req, res) => {
   const { action } = req.params;
-  const allowedActions = ['playpause', 'next', 'prev', 'stop'];
+  const allowedActions = ['playpause', 'next', 'prev'];
 
   if (!allowedActions.includes(action)) {
     return res.status(400).json({ error: 'Invalid action' });
   }
 
-  let method: 'PlayPause' | 'Next' | 'Prev' | 'Stop' = 'PlayPause';
+  if (!MediaController.isSupported()) {
+    return res.status(501).json({
+      error: `Media controls are not supported on ${process.platform}`,
+      supported: false,
+    });
+  }
+
+  let method: 'PlayPause' | 'Next' | 'Prev' = 'PlayPause';
   switch (action) {
     case 'playpause': method = 'PlayPause'; break;
     case 'next': method = 'Next'; break;
     case 'prev': method = 'Prev'; break;
-    case 'stop': method = 'Stop'; break;
   }
 
   try {
@@ -583,7 +617,7 @@ setInterval(() => {
 // Handle process termination
 process.on('SIGINT', () => {
   console.log('Shutting down server...');
-  MediaController.getInstance().destroy();
+  MediaController.destroyInstance();
   wss.clients.forEach(client => {
     if (client.readyState === WebSocket.OPEN) {
       client.close();
