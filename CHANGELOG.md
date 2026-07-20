@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [1.5.1](https://github.com/Volodymyr-Bauzi/PC-Volume-controll-using-mobile/compare/v1.5.0...v1.5.1) (2026-07-20)
+
+
+### Bug Fixes
+
+* **media:** send media keys as extended keys and recover wedged PowerShell helper ([7eda66b](https://github.com/Volodymyr-Bauzi/PC-Volume-controll-using-mobile/commit/7eda66b1611691b226bc0a23950471e35e644342))
+
 ## [1.5.0](https://github.com/Volodymyr-Bauzi/PC-Volume-controll-using-mobile/compare/v1.4.0...v1.5.0) (2026-07-06)
 
 
