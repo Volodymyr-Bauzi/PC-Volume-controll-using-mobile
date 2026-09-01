@@ -3,7 +3,7 @@ name: Release
 on:
   push:
     tags:
-      - 'v*' # Push events matching v1.0, v20.15.10, etc.
+      - "v*" # Push events matching v1.0, v20.15.10, etc.
 
 permissions:
   contents: write
@@ -28,13 +28,13 @@ jobs:
             artifact: macos
             build_cmd: npm run package:mac
             dist_dir: mac
-            
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0  # Fetch all history for all branches and tags
-          
+          fetch-depth: 0 # Fetch all history for all branches and tags
+
       - name: Configure Git
         run: |
           git config --global user.name 'GitHub Actions'
@@ -43,8 +43,8 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '18.x'
-          cache: 'npm'
+          node-version: "18.x"
+          cache: "npm"
 
       - name: Install system dependencies (Linux)
         if: matrix.os == 'ubuntu-latest'
@@ -57,7 +57,7 @@ jobs:
 
       - name: Build application
         run: ${{ matrix.build_cmd }}
-        
+
       - name: List files in dist directory
         if: matrix.os == 'ubuntu-latest'
         run: |
@@ -65,7 +65,7 @@ jobs:
           ls -la dist/
           echo "--- Contents of dist/${{ matrix.dist_dir }}/ ---"
           ls -la dist/${{ matrix.dist_dir }} || echo "Directory not found"
-          
+
       - name: List files in dist directory (Windows)
         if: matrix.os == 'windows-2022'
         run: |
@@ -83,7 +83,7 @@ jobs:
         run: |
           mkdir -p release
           node package-release.js
-          
+
       - name: Create release directory and package release (Windows)
         if: matrix.os == 'windows-2022'
         run: |
@@ -195,7 +195,7 @@ jobs:
             ## What's New in ${{ github.ref_name }}
             - Pre-built packages for Windows and Linux
             - Improved packaging and distribution
-            
+
             ### Download Links
             - **Windows x64**: [volume-control-windows-${{ github.ref_name }}.zip](https://github.com/Volodymyr-Bauzi/PC-Volume-controll-using-mobile/releases/download/${{ github.ref_name }}/volume-control-windows-${{ github.ref_name }}.zip)
             - **Linux x64**: [volume-control-linux-${{ github.ref_name }}.zip](https://github.com/Volodymyr-Bauzi/PC-Volume-controll-using-mobile/releases/download/${{ github.ref_name }}/volume-control-linux-${{ github.ref_name }}.zip)
@@ -208,6 +208,10 @@ jobs:
                - Windows: Double-click `volume-control.exe`
                - Linux: Run `chmod +x volume-control` then `./volume-control`
                - macOS: Run `./start.sh` (grant Accessibility permission for media keys)
+
+            > macOS: the package runs natively on both Apple Silicon (M1–M4) and Intel — no Rosetta 2 needed.
+            > Launch it with `./start.sh`, which selects the matching binary and clears the download quarantine flag.
+            > Running `volume-control-arm64` / `volume-control-x64` directly will trip Gatekeeper.
 
             > macOS note: only the main (system) volume and media keys are controllable — per-app volume is not available on macOS.
           draft: false
@@ -227,7 +231,7 @@ jobs:
         with:
           fetch-depth: 0
           token: ${{ secrets.GITHUB_TOKEN }}
-          ref: main  # Explicitly checkout main branch
+          ref: main # Explicitly checkout main branch
 
       - name: Configure Git
         run: |
@@ -247,7 +251,7 @@ jobs:
           # Update the download links
           sed -i 's|https://github\.com/Volodymyr-Bauzi/PC-Volume-controll-using-mobile/releases/download/v[0-9]*\.[0-9]*\.[0-9]*/volume-control-windows-v[0-9]*\.[0-9]*\.[0-9]*\.zip|https://github.com/Volodymyr-Bauzi/PC-Volume-controll-using-mobile/releases/download/${VERSION}/volume-control-windows-v${VERSION}.zip|g' README.md
           sed -i 's|https://github\.com/Volodymyr-Bauzi/PC-Volume-controll-using-mobile/releases/download/v[0-9]*\.[0-9]*\.[0-9]*/volume-control-linux-v[0-9]*\.[0-9]*\.[0-9]*\.zip|https://github.com/Volodymyr-Bauzi/PC-Volume-controll-using-mobile/releases/download/${VERSION}/volume-control-linux-v${VERSION}.zip|g' README.md
-          
+
       - name: Commit and push changes
         run: |
           # Check if there are any changes to commit

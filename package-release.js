@@ -34,8 +34,10 @@ const platforms = [
   {
     name: 'macos',
     srcDir: path.join(__dirname, 'dist', 'mac'),
+    // Both architectures ship in one zip; start.sh picks the right one.
     files: [
-      'volume-control',
+      'volume-control-x64',
+      'volume-control-arm64',
       'addon.node',
       'start.sh'
     ]
@@ -73,6 +75,9 @@ platforms.forEach(platform => {
       }
       
       fs.copyFileSync(srcPath, destPath);
+      // Keep the executable bit: a mode-0644 binary inside the zip means
+      // "Permission denied" for whoever downloads it.
+      fs.chmodSync(destPath, fs.statSync(srcPath).mode & 0o777);
     } else {
       console.warn(`  Warning: ${srcPath} not found`);
     }

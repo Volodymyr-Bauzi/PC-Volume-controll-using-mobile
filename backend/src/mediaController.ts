@@ -7,7 +7,8 @@ const MAX_RESTART_ATTEMPTS = 5;
 const MAX_RESTART_DELAY_MS = 30_000;
 // If PowerShell doesn't acknowledge a command in this window we assume the
 // helper is wedged (or silently dead) and recycle it.
-const ACK_TIMEOUT_MS = 1500;
+// WinRT calls can be slower than a raw key press, so allow some headroom.
+const ACK_TIMEOUT_MS = 3000;
 
 // --- macOS: media keys via the native addon (NX aux keyboard events) ---
 
@@ -166,6 +167,88 @@ public class KeySender {
 }
 '@
 Add-Type -TypeDefinition $code -Language CSharp
+
+# --- Preferred path: address the Windows media session (SMTC) directly ---
+#
+# Broadcasting a media key only works if some app still has a live handler
+# registered. Chrome/YouTube drop their Media Session handlers on SPA
+# navigation (i.e. right after a track switch), so the key lands nowhere and
+# the buttons appear "blocked" until the page is reloaded. Talking to the
+# GlobalSystemMediaTransportControls session skips that whole layer.
+Add-Type -AssemblyName System.Runtime.WindowsRuntime
+
+$script:AsTaskGeneric = ([System.WindowsRuntimeSystemExtensions].GetMethods() |
+    Where-Object {
+        $_.Name -eq 'AsTask' -and
+        $_.GetParameters().Count -eq 1 -and
+        $_.GetParameters()[0].ParameterType.Name -eq 'IAsyncOperation\`1'
+    })[0]
+
+function Await($op, $type) {
+    $asTask  = $script:AsTaskGeneric.MakeGenericMethod($type)
+    $netTask = $asTask.Invoke($null, @($op))
+    if (-not $netTask.Wait(2000)) { throw 'WinRT operation timed out' }
+    $netTask.Result
+}
+
+$script:Smtc = $null
+try {
+    [Windows.Media.Control.GlobalSystemMediaTransportControlsSessionManager, Windows.Media, ContentType = WindowsRuntime] | Out-Null
+    $script:Smtc = Await ([Windows.Media.Control.GlobalSystemMediaTransportControlsSessionManager]::RequestAsync()) ([Windows.Media.Control.GlobalSystemMediaTransportControlsSessionManager])
+} catch {
+    # Windows < 10 1809, or WinRT unavailable — media keys remain as fallback.
+    $script:Smtc = $null
+}
+
+function Test-Supports($session, $action) {
+    $c = $session.GetPlaybackInfo().Controls
+    switch ($action) {
+        'Next'    { return $c.IsNextEnabled }
+        'Prev'    { return $c.IsPreviousEnabled }
+        default   { return ($c.IsPlayEnabled -or $c.IsPauseEnabled) }
+    }
+}
+
+# Prefer the session Windows considers current; if it can't service this
+# action (YouTube on a standalone video reports IsNextEnabled = false), fall
+# back to any other session that can.
+function Get-TargetSession($action) {
+    if (-not $script:Smtc) { return $null }
+    try {
+        $cur = $script:Smtc.GetCurrentSession()
+        if ($cur -and (Test-Supports $cur $action)) { return $cur }
+        foreach ($s in $script:Smtc.GetSessions()) {
+            if (Test-Supports $s $action) { return $s }
+        }
+    } catch { }
+    return $null
+}
+
+function Invoke-Media($action) {
+    $session = Get-TargetSession $action
+    if ($session) {
+        try {
+            $op = switch ($action) {
+                'Next'  { $session.TrySkipNextAsync() }
+                'Prev'  { $session.TrySkipPreviousAsync() }
+                default { $session.TryTogglePlayPauseAsync() }
+            }
+            if (Await $op ([bool])) {
+                Write-Output "ACK smtc"
+                return
+            }
+        } catch { }
+    }
+
+    # Fallback: global media key.
+    switch ($action) {
+        'Next'  { [KeySender]::Next() }
+        'Prev'  { [KeySender]::Prev() }
+        default { [KeySender]::PlayPause() }
+    }
+    Write-Output "ACK key"
+}
+
 Write-Output "READY"
 `;
 
@@ -183,6 +266,11 @@ Write-Output "READY"
           this.restartAttempts = 0; // healthy again — reset backoff
           this.processQueue();
         } else if (line.includes('ACK')) {
+          // "ACK smtc" = delivered to the media session, "ACK key" = fell back
+          // to a global media key. Useful when a player stops responding.
+          console.log(
+            `[media] ${this.inFlight} -> ${line.includes('smtc') ? 'media session' : 'media key (fallback)'}`
+          );
           this.clearAck();
           this.inFlight = null;
           this.processQueue();
@@ -264,7 +352,7 @@ Write-Output "READY"
 
     this.inFlight = command;
     try {
-      this.ps.stdin.write(`[KeySender]::${command}(); Write-Output "ACK"\n`);
+      this.ps.stdin.write(`Invoke-Media '${command}'\n`);
     } catch (error) {
       console.error('[media] Failed to write to PowerShell:', error);
       this.recycle();

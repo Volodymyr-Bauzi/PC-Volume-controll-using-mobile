@@ -26,19 +26,27 @@ const backendDir = path.join(__dirname, 'backend');
 
 async function cleanupExecutables() {
     await Promise.all(platforms.map(async platform => {
-        const executableExt = platform === 'win' ? '.exe' : '';
-        const executablePath = path.join(distDir, platform, `volume-control${executableExt}`);
-        
-        if (fs.existsSync(executablePath)) {
-            try {
-            fs.unlinkSync(executablePath);
-            console.log(`Cleaned up old executable: ${executablePath}`);
-        } catch (err) {
-            console.warn(`Warning: Could not remove old executable ${executablePath}. It might be running.`);
-            console.warn('Please close any running instances of the app and try again.');
-            process.exit(1);
+        // macOS ships one thin binary per architecture (see the packaging step).
+        const executableNames = platform === 'win'
+            ? ['volume-control.exe']
+            : platform === 'mac'
+            ? ['volume-control', 'volume-control-x64', 'volume-control-arm64']
+            : ['volume-control'];
+
+        for (const executableName of executableNames) {
+            const executablePath = path.join(distDir, platform, executableName);
+
+            if (fs.existsSync(executablePath)) {
+                try {
+                    fs.unlinkSync(executablePath);
+                    console.log(`Cleaned up old executable: ${executablePath}`);
+                } catch (err) {
+                    console.warn(`Warning: Could not remove old executable ${executablePath}. It might be running.`);
+                    console.warn('Please close any running instances of the app and try again.');
+                    process.exit(1);
+                }
+            }
         }
-    }
     }));
 }
 
@@ -131,14 +139,61 @@ async function packageApp() {
             // Copy Native Addon
             const addonSrc = path.join(backendDir, 'build', 'Release', 'addon.node');
             if (fs.existsSync(addonSrc)) {
-                fs.copyFileSync(addonSrc, path.join(platformDir, 'addon.node'));
+                const addonDest = path.join(platformDir, 'addon.node');
+                fs.copyFileSync(addonSrc, addonDest);
+
+                // binding.gyp asks for a universal (x86_64 + arm64) addon on macOS.
+                // If a slice is missing the app loads on one architecture and dies
+                // on the other, so fail loudly here rather than in a user's Terminal.
+                if (platform === 'mac') {
+                    const archs = execSync(`lipo -archs "${addonDest}"`).toString().trim().split(/\s+/);
+                    console.log(`Native addon architectures: ${archs.join(', ')}`);
+                    const rebuildHint =
+                        'Run `npm run clean` in backend/ and rebuild so binding.gyp produces a universal addon.';
+                    if (!archs.includes('arm64')) {
+                        // Every Mac sold since 2020 is Apple Silicon - refuse to ship without it.
+                        throw new Error(`addon.node has no arm64 slice (found: ${archs.join(', ')}). ${rebuildHint}`);
+                    }
+                    if (!archs.includes('x86_64')) {
+                        console.warn(`Warning: addon.node has no x86_64 slice (found: ${archs.join(', ')}).`);
+                        console.warn(`Intel Macs will fail to load the audio addon. ${rebuildHint}`);
+                    }
+                }
             }
         }
 
-        // Package the backend ('mac' -> pkg target name 'macos')
-        const pkgPlatform = platform === 'mac' ? 'macos' : platform;
-        console.log(`Building executable for ${platform}...`);
-        execSync(`pkg "${backendDir}" --targets node18-${pkgPlatform}-x64 --output "${path.join(platformDir, `volume-control${platform === 'win' ? '.exe' : ''}`)}"`, { stdio: 'inherit' });
+        // Package the backend.
+        //
+        // macOS gets one thin binary per architecture rather than a single
+        // `lipo`-merged universal file: pkg appends its payload after the end of
+        // the Mach-O image and patches the absolute file offset of that payload
+        // into the binary. `lipo` nests each input at a new offset inside the fat
+        // container, so the patched offset no longer points at the payload and the
+        // merged binary dies on startup. Shipping both slices plus an arch-aware
+        // start.sh gives the same result for the user: one download, runs on Intel
+        // and on Apple Silicon natively (no Rosetta).
+        if (platform === 'mac') {
+            for (const arch of ['x64', 'arm64']) {
+                const output = path.join(platformDir, `volume-control-${arch}`);
+                console.log(`Building macOS executable (${arch})...`);
+                execSync(`pkg "${backendDir}" --targets node18-macos-${arch} --output "${output}"`, { stdio: 'inherit' });
+
+                // pkg ad-hoc signs its macOS output, but a missing or invalid
+                // signature is an unrecoverable SIGKILL on Apple Silicon, so
+                // re-sign explicitly instead of trusting it.
+                try {
+                    execSync(`codesign --force --sign - "${output}"`, { stdio: 'inherit' });
+                } catch (err) {
+                    console.warn(`Warning: could not ad-hoc sign ${output}: ${err.message}`);
+                }
+
+                fs.chmodSync(output, 0o755);
+                console.log(execSync(`lipo -archs "${output}"`).toString().trim());
+            }
+        } else {
+            console.log(`Building executable for ${platform}...`);
+            execSync(`pkg "${backendDir}" --targets node18-${platform}-x64 --output "${path.join(platformDir, `volume-control${platform === 'win' ? '.exe' : ''}`)}"`, { stdio: 'inherit' });
+        }
 
         // For Linux, copy necessary build files
         if (platform === 'linux') {
@@ -211,27 +266,61 @@ echo Press any key to exit...
 pause`
             : platform === 'mac'
             ? `#!/bin/bash
+# Finder launches scripts from the user's home directory, not from the folder
+# the script lives in, so anchor to the script's own directory first.
+cd "$(dirname "$0")" || exit 1
+
 echo "Starting Volume Control App..."
+
+# Anything unzipped from a browser download carries com.apple.quarantine.
+# Gatekeeper refuses to launch an ad-hoc signed binary while that flag is set,
+# so clear it for this folder. Harmless if it was never there.
+xattr -dr com.apple.quarantine . 2>/dev/null || true
+
+# Pick the binary that matches this Mac. uname reports x86_64 when the shell
+# itself is running under Rosetta, so ask the kernel whether we are translated.
+ARCH="$(uname -m)"
+if [ "$ARCH" = "x86_64" ] && [ "$(sysctl -n sysctl.proc_translated 2>/dev/null)" = "1" ]; then
+    ARCH="arm64"
+fi
+
+case "$ARCH" in
+    arm64)  BIN="./volume-control-arm64" ;;
+    x86_64) BIN="./volume-control-x64" ;;
+    *)
+        echo "Unsupported architecture: $ARCH"
+        exit 1
+        ;;
+esac
+
+if [ ! -f "$BIN" ]; then
+    echo "Error: $BIN was not found next to this script."
+    echo "Re-download the macOS package and extract the whole folder before running it."
+    exit 1
+fi
+chmod +x "$BIN"
 
 # Get local IP address (Wi-Fi first, then Ethernet)
 export HOST=$(ipconfig getifaddr en0 2>/dev/null || ipconfig getifaddr en1 2>/dev/null || echo "localhost")
 export BACKEND_PORT=8777
 
-# Make the executable runnable
-chmod +x ./volume-control
-
 # Start the server with the addon in the current directory
-./volume-control &
+"$BIN" &
+SERVER_PID=$!
+trap 'kill $SERVER_PID 2>/dev/null' EXIT INT TERM
 sleep 2
 
-open "http://$HOST:8777"
+open "http://$HOST:$BACKEND_PORT"
 echo
 echo "App is running! You can now access it from your mobile device at:"
-echo "http://$HOST:8777"
+echo "http://$HOST:$BACKEND_PORT"
 echo
 echo "Press Ctrl+C to stop the server when done"
-read -p "Press Enter to exit..."`
+wait $SERVER_PID`
             : `#!/bin/bash
+# Anchor to the script's own directory: file managers launch from $HOME.
+cd "$(dirname "$0")" || exit 1
+
 echo "Starting Volume Control App..."
 
 # Check if native addon is built
@@ -291,7 +380,7 @@ read -p "Press Enter to exit..."`;
 ${platform === 'win'
     ? '- **Windows** 10/11 (64-bit) or Windows 7/8.1 (32-bit)\n- 100MB free disk space\n- Network connection for mobile access'
     : platform === 'mac'
-    ? '- **macOS** 10.13+ (Intel; Apple Silicon via Rosetta 2)\n- 100MB free disk space\n- Network connection for mobile access\n\n> Note: on macOS only the **system (master) volume** can be controlled. Per-application volume is not possible with public macOS audio APIs.'
+    ? '- **macOS** 10.13+ on Intel, **macOS 11+** on Apple Silicon (M1/M2/M3/M4)\n- Runs natively on both — no Rosetta 2 required\n- 100MB free disk space\n- Network connection for mobile access\n\n> The package contains `volume-control-arm64` and `volume-control-x64`; `start.sh` picks the right one for your Mac. Always launch via `start.sh` rather than running a binary directly.\n\n> Note: on macOS only the **system (master) volume** can be controlled. Per-application volume is not possible with public macOS audio APIs.'
     : '- **Linux** (most modern distributions)\n- PulseAudio sound server\n- 100MB free disk space\n- Network connection for mobile access'}
 
 ## 🔧 Troubleshooting
