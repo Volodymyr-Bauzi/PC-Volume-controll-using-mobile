@@ -25,10 +25,18 @@ const platforms = [
   {
     name: 'linux',
     srcDir: path.join(__dirname, 'dist', 'linux'),
+    // addon.node is now prebuilt by package-app.js and sits at the top of
+    // dist/linux (it used to be listed under build/Release, where it never
+    // existed). build.sh and its sources ship as the fallback for distros the
+    // prebuilt addon does not match - they were missing from the zip entirely.
     files: [
       'volume-control',
-      'build/Release/addon.node',
-      'start.sh'
+      'addon.node',
+      'start.sh',
+      'build.sh',
+      'binding.gyp',
+      'package.json',
+      'src/platforms/linux/audio_control.cpp'
     ]
   },
   {
@@ -63,7 +71,7 @@ platforms.forEach(platform => {
   // Copy files
   platform.files.forEach(file => {
     const srcPath = path.join(platform.srcDir, file);
-    const destPath = path.join(tempDir, path.basename(file));
+    const destPath = path.join(tempDir, file);
     
     if (fs.existsSync(srcPath)) {
       console.log(`  Copying ${file}...`);

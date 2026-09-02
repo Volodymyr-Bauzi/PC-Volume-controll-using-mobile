@@ -126,15 +126,24 @@ async function packageApp() {
         // Build native addon for the target platform
         console.log(`Building native addon for ${platform}...`);
         const platformEnv = { ...process.env };
-        if (platform === 'linux') {
-            // Skip native addon build for Linux since it's not supported in cross-compilation
-            console.log('Skipping native addon build for Linux - it must be built on the target machine');
-        } else {
-            // Check & Build Native Addon
+        {
+            // Linux is built here too. The guard above already bailed out unless
+            // this IS a Linux host, and the release runner installs libpulse-dev,
+            // so a prebuilt addon.node can ship inside the package instead of
+            // asking every user to compile one.
             const addonPath = path.join(backendDir, 'build', 'Release', 'addon.node');
             if (!fs.existsSync(addonPath)) {
                 console.log(`Building native addon for ${platform}...`);
-                execSync('npm run build:cpp', { cwd: backendDir, stdio: 'inherit', env: platformEnv });
+                try {
+                    execSync('npm run build:cpp', { cwd: backendDir, stdio: 'inherit', env: platformEnv });
+                } catch (err) {
+                    if (platform !== 'linux') throw err;
+                    // Most likely missing libpulse headers on this machine. Fall
+                    // back to shipping sources + build.sh; the app still runs
+                    // UI-only until the addon is compiled on the target box.
+                    console.warn(`Warning: could not build the Linux native addon here: ${err.message}`);
+                    console.warn('Shipping sources and build.sh instead of a prebuilt addon.node.');
+                }
             }
             // Copy Native Addon
             const addonSrc = path.join(backendDir, 'build', 'Release', 'addon.node');
@@ -197,26 +206,38 @@ async function packageApp() {
 
         // For Linux, copy necessary build files
         if (platform === 'linux') {
-            // Copy native addon source files
+            // Copy the sources build.sh actually needs. binding.gyp's linux
+            // branch compiles src/platforms/linux/audio_control.cpp - the old
+            // list pointed at the Windows sources (one of them at a path that
+            // does not exist), so build.sh could never have succeeded.
             const nativeFiles = [
-                'src/cpp/nodeBridge.cpp',
-                'src/cpp/windows.cpp',
-                'binding.gyp',
-                'package.json'
+                'src/platforms/linux/audio_control.cpp',
+                'binding.gyp'
             ];
 
-            // Create directories
-            fs.mkdirSync(path.join(platformDir, 'src', 'cpp'), { recursive: true });
-            
-            // Copy each file
             nativeFiles.forEach(file => {
                 const src = path.join(backendDir, file);
                 const dest = path.join(platformDir, file);
                 if (fs.existsSync(src)) {
                     fs.mkdirSync(path.dirname(dest), { recursive: true });
                     fs.copyFileSync(src, dest);
+                } else {
+                    throw new Error(`Cannot package Linux build sources: ${src} is missing.`);
                 }
             });
+
+            // A minimal manifest for the on-device build. Copying the backend's
+            // own package.json here would drag in every runtime dependency and
+            // re-trigger node-gyp through its "gypfile": true flag.
+            fs.writeFileSync(
+                path.join(platformDir, 'package.json'),
+                JSON.stringify({
+                    name: 'volume-control-addon',
+                    version: '1.0.0',
+                    private: true,
+                    dependencies: { 'node-addon-api': '^4.0.0' }
+                }, null, 2)
+            );
 
             // Create build script
             const buildInstructions = `#!/bin/bash
@@ -226,21 +247,31 @@ cd "$(dirname "$0")"
 if ! command -v node &> /dev/null || ! command -v npm &> /dev/null; then
     echo "Error: Node.js and npm are required to build the native addon."
     echo "Please install them using your distribution's package manager:"
-    echo "For Ubuntu/Debian: sudo apt-get install nodejs npm build-essential"
-    echo "For Fedora: sudo dnf install nodejs npm gcc-c++ make"
-    echo "For Arch Linux: sudo pacman -S nodejs npm base-devel"
+    echo "For Ubuntu/Debian/Pop!_OS: sudo apt-get install nodejs npm build-essential libpulse-dev"
+    echo "For Fedora: sudo dnf install nodejs npm gcc-c++ make pulseaudio-libs-devel"
+    echo "For Arch Linux: sudo pacman -S nodejs npm base-devel libpulse"
+    exit 1
+fi
+
+# binding.gyp resolves libpulse through pkg-config, so the headers must be
+# present before node-gyp runs - otherwise it fails with an opaque gyp error.
+if ! pkg-config --exists libpulse; then
+    echo "Error: PulseAudio development headers (libpulse) were not found."
+    echo "For Ubuntu/Debian/Pop!_OS: sudo apt-get install libpulse-dev"
+    echo "For Fedora: sudo dnf install pulseaudio-libs-devel"
+    echo "For Arch Linux: sudo pacman -S libpulse"
     exit 1
 fi
 
 # Install only the necessary dependencies for building
-npm install node-addon-api node-gyp
+npm install --no-save node-addon-api node-gyp || exit 1
 
 # Build the native addon
-./node_modules/.bin/node-gyp configure build
+./node_modules/.bin/node-gyp rebuild || exit 1
 
-# Copy the built addon
-mkdir -p build/Release
+# Copy the built addon next to the executable
 cp build/Release/addon.node ./addon.node
+echo "Native addon built successfully."
 `;
             fs.writeFileSync(path.join(platformDir, 'build.sh'), buildInstructions);
             fs.chmodSync(path.join(platformDir, 'build.sh'), '755');
@@ -323,20 +354,29 @@ cd "$(dirname "$0")" || exit 1
 
 echo "Starting Volume Control App..."
 
-# Check if native addon is built
+# A prebuilt addon.node ships in the package. If it is absent - or was built
+# against a different distro - try to compile it here, but never block startup:
+# the server falls back to a no-op audio control and still serves the web UI.
 if [ ! -f "./addon.node" ]; then
-    echo "Native addon not found. Building it now..."
-    echo "This will require Node.js and build tools to be installed."
-    echo "The installation will be guided if they are missing."
-    ./build.sh
-    if [ $? -ne 0 ]; then
-        echo "Failed to build native addon. Please check the error messages above."
-        exit 1
+    echo "Native addon not found."
+    if [ -f "./build.sh" ]; then
+        echo "Attempting to build it (needs Node.js, build tools and libpulse headers)..."
+        chmod +x ./build.sh
+        ./build.sh || echo "Could not build the native addon."
+    else
+        echo "No build script shipped with this package."
     fi
 fi
 
+if [ ! -f "./addon.node" ]; then
+    echo
+    echo "WARNING: starting without the native audio addon."
+    echo "The web interface will load, but volume control will not work."
+    echo
+fi
+
 # Get local IP address
-export HOST=$(ip route get 1 | awk '{print $7;exit}')
+export HOST=$(ip route get 1 2>/dev/null | awk '{print $7;exit}')
 if [ -z "$HOST" ]; then
     # Fallback method
     export HOST=$(hostname -I | awk '{print $1}')
@@ -348,6 +388,8 @@ chmod +x ./volume-control
 
 # Start the server with the addon in the current directory
 LD_LIBRARY_PATH=".:$LD_LIBRARY_PATH" ./volume-control &
+SERVER_PID=$!
+trap 'kill $SERVER_PID 2>/dev/null' EXIT INT TERM
 sleep 2
 
 echo
@@ -355,7 +397,7 @@ echo "App is running! You can now access it from your mobile device at:"
 echo "http://$HOST:$PORT"
 echo
 echo "Press Ctrl+C to stop the server when done"
-read -p "Press Enter to exit..."`;
+wait $SERVER_PID`;
 
         // Write start script
         const startScriptPath = path.join(platformDir, platform === 'win' ? 'start.bat' : 'start.sh');
